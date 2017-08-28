@@ -1,4 +1,4 @@
-# Streamlist - open source self-hosted personal music server
+# Streamlist - self-hosted music streaming server written in Go
 
 ## Features
 

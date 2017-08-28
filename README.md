@@ -5,6 +5,13 @@
 * **Playlists**
   * Create unlimited playlists from your library
   * Shareable link for each playlist
+* **Library**
+  * Filter your media by title and description
+  * Add to playlists with one button
+* **Import**
+  * YouTube search and download
+  * Built in search with queueing downloader
+  * Cancel downloading/transcode jobs
 * **HTTP Streaming to any device**
   * Transcodes to streamable MP4.
   * Converts any source to AAC-encoded MP4 (.m4a) audio files using ffmpeg
@@ -18,9 +25,6 @@
   * Keyboard shortcuts
   * `space` (play/pause) `p` (previous) `n` (next) `m` (mute) `-`/`+` (volume)
   * Remembers your volume setting
-* **Import from YouTube**
-  * Built in search with queueing downloader
-  * Cancel downloading/transcode jobs
 * **Simple self-hosting**
   * Public Docker image
   * Single static Go binary with assets bundled

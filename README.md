@@ -42,7 +42,7 @@
 
 * Type: VPS or dedicated
 * Distribution: Ubuntu 16.04 (Xenial)
-* Memory: 512GB+
+* Memory: 512MB
 * Storage: 10GB+
 
 **Recommended Providers**

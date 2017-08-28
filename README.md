@@ -35,8 +35,36 @@
 
 ## Running
 
+### 1. Get a server
 
-### 1. Install Docker
+**Recommended Specs**
+
+* Type: VPS or dedicated
+* Distribution: Ubuntu 16.04 (Xenial)
+* Memory: 512GB+
+* Storage: 10GB+
+
+**Recommended Providers**
+
+* [OVH](https://www.ovh.com/)
+* [Scaleway](https://www.scaleway.com/)
+
+### 2. Add a DNS record
+
+Create a DNS `A` record in your domain pointing to your server's IP address.
+
+**Example:** `music.example.com  A  172.16.1.1`
+
+### 3. Enable Let's Encrypt
+
+When enabled with the `--letsencrypt` flag, trickle runs a TLS ("SSL") https server on port 443. It also runs a standard web server on port 80 to redirect clients to the secure server.
+
+**Requirements**
+
+* Your server must have a publicly resolvable DNS record.
+* Your server must be reachable over the internet on ports 80 and 443.
+
+### 4. Install Docker
 
 ```bash
 # Update apt
@@ -72,7 +100,7 @@ $ sudo docker run hello-world
 
 ```
 
-### 2. Run as a Docker container
+### 5. Run as a Docker container
 
 The official image is `streamlist/streamlist`, which should run in any up-to-date Docker environment.
 
@@ -95,7 +123,7 @@ $ sudo docker logs -f streamlist
 
 ```
 
-### 3. Updating the container image
+### 6. Updating the container image
 
 Pull the latest image, remove the container, and re-create the container as explained above.
 

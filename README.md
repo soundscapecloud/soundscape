@@ -1,6 +1,6 @@
 # Streamlist - self-hosted music streaming server written in Go
 
-![Screencast](https://raw.githubusercontent.com/streamlist/streamlist/master/screencast1.gif?updated3)
+![Screencast](https://raw.githubusercontent.com/streamlist/streamlist/master/screencast1.gif?updated4)
 
 ![Screenshot - Playlists](https://raw.githubusercontent.com/streamlist/streamlist/master/screenshot1.png)
 ![Screenshot - Library](https://raw.githubusercontent.com/streamlist/streamlist/master/screenshot2.png)

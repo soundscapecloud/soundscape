@@ -145,3 +145,30 @@ $ sudo docker create ... (see above)
 
 ```
 
+## Standalone (without Docker)
+
+Replace `amd64` with `arm64` or `armv7` depending on your architecture.
+
+```bash
+
+# Install ffmpeg.
+$ sudo apt-get update
+$ sudo apt-get install -y wget ffmpeg
+
+# Download the trickle binary.
+$ sudo wget -O /usr/bin/streamlist \
+    https://github.com/streamlist/streamlist/blob/master/streamlist-linux-amd64
+
+# Make it executable.
+$ sudo chmod +x /usr/bin/streamlist
+
+# Allow it to bind to privileged ports 80 and 443.
+$ sudo setcap cap_net_bind_service=+ep /usr/bin/streamlist
+
+# Enable Let's Encrypt using your domain for automatic TLS configuration.
+$ streamlist --letsencrypt --http-host music.example.com
+.503869865804371e+09    info    Streamlist URL: https://music.example.com/streamlist
+1.503869865804527e+09    info    Login credentials:  streamlist  /  1134423142
+
+```
+

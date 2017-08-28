@@ -15,7 +15,8 @@
   * Enables downloading for offline access
 * **Lightweight player**
   * Uses browser-native player with minimal additions
-  * Keyboard shortcuts (space = play/pause, p = previous, n = next, m = mute, -/+ = volume)
+  * Keyboard shortcuts
+  * `space` (play/pause) `p` (previous) `n` (next) `m` (mute) `-`/`+` (volume)
   * Remembers your volume setting
 * **Import from YouTube**
   * Built in search with queueing downloader
@@ -83,8 +84,8 @@ $ sudo docker create                            \
 $ sudo docker start streamlist
 
 $ sudo docker logs -f streamlist
-1.503869865804371e+09	info	Streamlist URL: https://music.example.com/streamlist
-1.503869865804527e+09	info	Login credentials:  streamlist  /  1134423142
+1.503869865804371e+09    info    Streamlist URL: https://music.example.com/streamlist
+1.503869865804527e+09    info    Login credentials:  streamlist  /  1134423142
 
 ```
 

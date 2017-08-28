@@ -60,7 +60,7 @@ Create a DNS `A` record in your domain pointing to your server's IP address.
 
 ### 3. Enable Let's Encrypt
 
-When enabled with the `--letsencrypt` flag, trickle runs a TLS ("SSL") https server on port 443. It also runs a standard web server on port 80 to redirect clients to the secure server.
+When enabled with the `--letsencrypt` flag, streamlist runs a TLS ("SSL") https server on port 443. It also runs a standard web server on port 80 to redirect clients to the secure server.
 
 **Requirements**
 
@@ -155,7 +155,7 @@ Replace `amd64` with `arm64` or `armv7` depending on your architecture.
 $ sudo apt-get update
 $ sudo apt-get install -y wget ffmpeg
 
-# Download the trickle binary.
+# Download the streamlist binary.
 $ sudo wget -O /usr/bin/streamlist \
     https://github.com/streamlist/streamlist/blob/master/streamlist-linux-amd64
 

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+        <meta name="referrer" content="origin">
+        <link rel="icon" href="/streamlist/static/logo.png">
+        <link rel="apple-touch-icon" href="/streamlist/static/logo.png">
+
+        <title>Streamlist</title>
+
+        <link rel="stylesheet" type="text/css" href="/streamlist/static/roboto.css">
+        <link rel="stylesheet" type="text/css" href="/streamlist/static/semantic/semantic.min.css">
+        <link rel="stylesheet" type="text/css" href="/streamlist/static/style.css?version=12345">
+
+        <script src="/streamlist/static/jquery.min.js"></script>
+        <script src="/streamlist/static/semantic/semantic.min.js"></script>
+    </head>
+    <body>
+
+        {{if $.User}}
+            <div class="navmenu ui secondary menu">
+                {{if $.Backlink}}
+                    {{if eq $.Section "play"}}
+                        <a class="item" href="/streamlist/"><i class="chevron left icon"></i></a>
+                    {{else if eq $.Section "view"}}
+                        <a class="item" href="/streamlist/library"><i class="chevron left icon"></i></a>
+                    {{else}}
+                        <a class="item" href="{{.Backlink}}"><i class="chevron left icon"></i></a>
+                    {{end}}
+                {{end}}
+                <a class="item" href="/streamlist/">
+                    <img src="/streamlist/static/logo.png">
+                </a>
+                <a class="item {{if eq $.Section "home" "edit"}}active{{end}}" href="/streamlist/">
+                    Playlists
+                </a>
+                <a class="item {{if eq $.Section "library"}}active{{end}}" href="/streamlist/library">
+                    Library
+                </a>
+                <a class="item {{if eq $.Section "import"}}active{{end}}" href="/streamlist/import">
+                    Import
+                </a>
+
+                <!--
+                <div class="right menu">
+                    <a class="item" href="/streamlist/create">
+                        <i class="large plus icon"></i>
+                    </a>
+                </div>
+                -->
+            </div>
+        {{end}}
+
+        {{with $message := $.Request.FormValue "message"}}
+            <div class="ui container">
+                <div class="ui positive message">
+                    {{if eq $message "mediadeleted"}}
+                        <a href="/streamlist/library"><i class="close icon"></i></a>
+                        <div class="header">
+                            Success: media deleted
+                        </div>
+                    {{else if eq $message "savecancelled"}}
+                        <a href="/streamlist/import"><i class="close icon"></i></a>
+                        <div class="header">
+                            Success: save cancelled
+                        </div>
+                    {{else if eq $message "playlistadded"}}
+                        <a href="/streamlist/"><i class="close icon"></i></a>
+                        <div class="header">
+                            Success: playlist added
+                        </div>
+                    {{else if eq $message "playlistdeleted"}}
+                        <a href="/streamlist/"><i class="close icon"></i></a>
+                        <div class="header">
+                            Success: playlist deleted
+                        </div>
+                    {{end}}
+                </div>
+                <div class="ui hidden divider"></div>
+            </div>
+        {{end}}
+
+        {{with $error := $.Error}}
+            <div class="ui container">
+                <div class="ui negative icon message">
+                    <i class="warning sign icon"></i>
+                    <div class="content">
+                        <div class="header">{{$error}}</div>
+                    </div>
+                </div>
+                <div class="ui hidden divider"></div>
+            </div>
+        {{end}}
+
+        <div class="full height">

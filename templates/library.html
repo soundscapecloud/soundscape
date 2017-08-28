@@ -1,0 +1,79 @@
+{{template "header.html" .}}
+
+<div class="ui container">
+    <h2 class="ui header">Library</h2>
+
+    <form class="ui small form" action="/streamlist/library" method="GET">
+        <div class="fields">
+            <div class="eight wide field">
+                <input type="text" name="q" value="{{$.Query}}" placeholder="Filter" autofocus>
+            </div>
+        </div>
+    </form>
+
+    {{if $.Query}}
+        <div class="ui hidden divider"></div>
+        <a href="/streamlist/library" class="ui image label">{{$.Query}} <i class="delete icon"></i></a>
+    {{end}}
+
+    {{if $.Medias}}
+        <table class="ui fixed striped unstackable table">
+            <tbody>
+                {{range $media := $.Medias}}
+                    <tr>
+                        <td class="nomobile two wide">
+                            <a href="/streamlist/media/view/{{$media.ID}}">
+                                <img class="thumbnail" src="/streamlist/media/thumbnail/{{$media.ID}}">
+                            </a>
+                        </td>
+                        <td class="ten wide">
+                            <a href="/streamlist/media/view/{{$media.ID}}">
+                                <div class="truncate ui small header">
+                                    {{$media.Title}}
+                                </div>
+                            </a>
+                            {{range $list := $.Lists}}
+                                <div class="listbox">
+                                    {{$hasmedia := $list.HasMedia $media}}
+                                    <button {{if $hasmedia}}style="display: none;"{{end}} class="toggler ui mini basic button" data-url="/streamlist/add/{{$list.ID}}/{{$media.ID}}"><i class="checkmark icon"></i> {{$list.Title}}</button>
+                                    <button {{if not $hasmedia}}style="display: none;"{{end}} class="toggler ui mini green button" data-url="/streamlist/remove/{{$list.ID}}/{{$media.ID}}"><i class="checkmark icon"></i> {{$list.Title}}</button>
+                                </div>
+                            {{end}}
+                        </td>
+                        <td class="right aligned four wide">
+                            {{duration $media.Length}}
+                            &nbsp;&nbsp;
+                            <a href="/streamlist/media/delete/{{$media.ID}}?p={{$.Page}}&q={{$.Query}}" data-prompt="Delete {{$media.Title}}?" class="confirm"><i class="red trash icon"></i></a>
+                        </td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+
+        <div class="ui fluid pagination menu">
+            {{range $page := $.Pages}}
+                <a href="/streamlist/library?p={{$page}}{{if $.Query}}&q={{$.Query}}{{end}}" class="{{if eq $page $.Page}}active{{end}} item">{{$page}}</a>
+            {{end}}
+        </div>
+
+    {{else}}
+        {{if $.Query}}
+            <div class="ui hidden divider"></div>
+            <div class="ui info message">
+                <div class="header">
+                    No media found matching &quot;{{$.Query}}&quot;
+                </div>
+            </div>
+            <div class="ui hidden divider"></div>
+        {{else}}
+            {{template "intro.html" .}}
+        {{end}}
+    {{end}}
+
+
+    <h5 class="ui header">
+        {{$.DiskInfo.UsedGB}} GB ({{$.DiskInfo.UsedPercent | printf "%.0f"}}%) of {{$.DiskInfo.TotalGB}} GB
+    </h5>
+</div>
+
+{{template "footer.html" .}}

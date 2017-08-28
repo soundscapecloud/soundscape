@@ -1,0 +1,82 @@
+
+        </div><!--full height-->
+
+        <div class="ui container">
+            <div class="ui right floated horizontal list">
+                <div class="disabled item" href="/streamlist/">Streamlist {{$.Version}}</div>
+            </div>
+
+            <div class="ui horizontal list">
+                <div class="item">&nbsp;</div>
+            </div>
+        </div>
+
+        <script>
+            window.pollerJob = {};
+            window.poller = function(target, url, delay) {
+                // Don't allow duplicate targets, so it's safe to call poller multiple times.
+                if (window.pollerJob[target] === "active") {
+                    return;
+                }
+                window.pollerJob[target] = "active";
+
+                var old = '';
+                var p = function() {
+                    // Target is gone, so we're done.
+                    if ($(target).length === 0) {
+                        delete window.pollerJob[target];
+                        return
+                    }
+
+                    // Make the request.
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        success: function(data) {
+                            // A doctype tag indicates we're getting a full HTML response, not a fragment.
+                            if (data.substring(0, 50).toLowerCase().indexOf("doctype") !== -1) {
+                                return;
+                            }
+                            // We only update the target if there is a change.
+                            if (data !== old) {
+                                $(target).html(data);
+                                old = data;
+                            }
+                        },
+                        complete: function() {
+                            setTimeout(p, delay);
+                        }
+                    });
+                };
+                p();
+            };
+        </script>
+
+        <script>
+            $(document).ready(function() {
+                $('.ui.checkbox').checkbox();
+                $('.ui.dropdown').dropdown();
+                $('.select.dropdown').dropdown();
+
+                $(document).on('click', '.confirm', function() {
+                    return confirm($(this).data('prompt'));
+                });
+
+                // Togglers
+                $(document).on('click', '.toggler', function() {
+                    var target = $(this).siblings('.toggler');
+                    var url = $(this).data('url');
+                    var data = $(this).data('data');
+
+                    $(this).toggle();
+                    $(target).toggle();
+                    $.ajax({ type: "POST", url: url, data: data });
+                });
+
+                // set volume on video player to 50%
+                $('video').prop('volume', 0.5);
+            });
+        </script>
+
+    </body>
+</html>

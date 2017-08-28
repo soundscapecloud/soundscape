@@ -1,0 +1,70 @@
+{{template "header.html" .}}
+
+{{$query := $.Request.FormValue "q"}}
+
+<div class="ui container">
+    <h2 class="ui header">Import</h2>
+</div>
+
+<div class="ui hidden divider"></div>
+
+<div id="jobs" class="ui container">
+</div>
+
+<div class="ui hidden divider"></div>
+
+<div class="ui container">
+    <h3 class="ui header">YouTube</h3>
+
+    <form class="ui large form" action="/streamlist/import" method="GET">
+        <div class="sixteen wide field">
+            <input type="text" name="q" placeholder="Search" value="" autofocus="autofocus" autocomplete="off">
+        </div>
+        <!--div class="sixteen wide field">
+            <div class="ui hidden divider"></div>
+            <button type="submit" class="ui right floated blue button">Search</button>
+        </div-->
+    </form>
+
+    {{if $query}}
+        <div class="ui hidden divider"></div>
+        <h5 class="ui header">
+            Results for "{{$query}}"
+        </h5>
+
+        {{if $.Youtubes}}
+            <table class="ui compact fixed striped unstackable table">
+                <tbody>
+                {{range $youtube := $.Youtubes}}
+                    <tr>
+                        <td class="nomobile two wide">
+                            <img class="thumbnail" src="{{$youtube.Thumbnail}}">
+                        </td>
+                        <td class="ten wide">
+                            <div class="truncate ui small header">
+                                {{$youtube.Title}}
+                            </div>
+                        </td>
+                        <td class="right aligned four wide">
+                            {{duration $youtube.Length}}
+                        </td>
+                        <td class="right aligned two wide">
+                            <button style="display: none;" class="toggler ui icon mini button" disabled><i class="cloud download icon"></i></button>
+                            <button class="toggler ui icon mini button" data-url="/streamlist/archiver/save/{{$youtube.ID}}"><i class="cloud download icon"></i></button>
+                        </td>
+                    </tr>
+                {{end}}
+                </tbody>
+            </table>
+        {{end}}
+    {{end}}
+</div>
+
+<script>
+    $(document).ready(function() {
+        poller('#jobs', '/streamlist/archiver/jobs', 2000);
+    });
+</script>
+
+
+{{template "footer.html" .}}

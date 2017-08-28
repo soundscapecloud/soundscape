@@ -1,0 +1,26 @@
+{{template "header.html" .}}
+
+<style>
+    body {
+        background-color: rgba(0,0,0,.9);
+    }
+    .navmenu .item {
+        color: #f1f1f1 !important;
+    }
+</style>
+
+<div class="ui container">
+    <h4 class="ui inverted header">{{$.Media.Title}}</h4>
+    <audio controls><source src="/streamlist/media/access/{{$.Media.ID}}.m4a"></audio>
+
+    <div class="ui hidden clearing divider"></div>
+
+    <div class="ui two large black labeled icon buttons">
+        {{if $.Media.HasAudio}}
+            <a href="/streamlist/media/download/{{$.Media.ID}}.m4a" class="ui button"><i class="download icon"></i>Audio</a>
+        {{end}}
+        <button class="ui button"></button>
+    </div>
+</div>
+
+{{template "footer.html" .}}

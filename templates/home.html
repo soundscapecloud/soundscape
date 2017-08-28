@@ -1,0 +1,37 @@
+{{template "header.html" .}}
+
+<div class="ui container">
+    <a class="ui right floated blue labeled icon button" href="/streamlist/create"><i class="plus icon"></i>New Playlist</a>
+    <div class="ui hidden clearing divider"></div>
+    <h2 class="ui header">Playlists</h2>
+
+    {{if $.Lists}}
+        <table class="ui single line fixed unstackable table">
+            <tbody>
+                {{range $list := $.Lists}}
+                    <tr>
+                        <td class="nine wide">
+                            <a class="truncate ui small blue header" href="/streamlist/play/{{$list.ID}}">
+                                {{$list.Title}}
+                            </a>
+                        </td>
+                        <td class="center aligned two wide">
+                            {{len $list.Medias}}
+                        </td>
+                        <td class="right aligned five wide">
+                            {{with $tl := $list.TotalLength}}
+                                {{duration $tl}}
+                            {{end}}
+                            &nbsp;&nbsp;
+                            <a href="/streamlist/edit/{{$list.ID}}"><i class="setting icon"></i></a>
+                        </td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+    {{else}}
+        {{template "intro.html" .}}
+    {{end}}
+</div>
+
+{{template "footer.html" .}}

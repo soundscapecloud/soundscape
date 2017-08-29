@@ -67,7 +67,35 @@ When enabled with the `--letsencrypt` flag, streamlist runs a TLS ("SSL") https 
 * Your server must have a publicly resolvable DNS record.
 * Your server must be reachable over the internet on ports 80 and 443.
 
-### 4. Install Docker
+### 4. Run the static binary
+
+Replace `amd64` with `arm64` or `armv7` depending on your architecture.
+
+```bash
+
+# Install ffmpeg.
+$ sudo apt-get update
+$ sudo apt-get install -y wget ffmpeg
+
+# Download the streamlist binary.
+$ sudo wget -O /usr/bin/streamlist https://raw.githubusercontent.com/streamlist/streamlist/master/streamlist-linux-amd64
+
+# Make it executable.
+$ sudo chmod +x /usr/bin/streamlist
+
+# Allow it to bind to privileged ports 80 and 443.
+$ sudo setcap cap_net_bind_service=+ep /usr/bin/streamlist
+
+# Enable Let's Encrypt using your domain for automatic TLS configuration.
+$ streamlist --letsencrypt --http-host music.example.com
+.503869865804371e+09    info    Streamlist URL: https://music.example.com/streamlist
+1.503869865804527e+09    info    Login credentials:  streamlist  /  1134423142
+
+```
+
+### 4. Run the Docker Image
+
+#### 1. Install Docker
 
 ```bash
 # Update apt
@@ -103,7 +131,7 @@ $ sudo docker run hello-world
 
 ```
 
-### 5. Run as a Docker container
+#### 2. Run the Docker image
 
 The official image is `streamlist/streamlist`, which should run in any up-to-date Docker environment.
 
@@ -126,7 +154,7 @@ $ sudo docker logs -f streamlist
 
 ```
 
-### 6. Updating the container image
+#### 3. Updating the container image
 
 Pull the latest image, remove the container, and re-create the container as explained above.
 
@@ -142,33 +170,6 @@ $ sudo docker rm streamlist
 
 # Re-create and start the container
 $ sudo docker create ... (see above)
-
-```
-
-## Standalone (without Docker)
-
-Replace `amd64` with `arm64` or `armv7` depending on your architecture.
-
-```bash
-
-# Install ffmpeg.
-$ sudo apt-get update
-$ sudo apt-get install -y wget ffmpeg
-
-# Download the streamlist binary.
-$ sudo wget -O /usr/bin/streamlist \
-    https://github.com/streamlist/streamlist/blob/master/streamlist-linux-amd64
-
-# Make it executable.
-$ sudo chmod +x /usr/bin/streamlist
-
-# Allow it to bind to privileged ports 80 and 443.
-$ sudo setcap cap_net_bind_service=+ep /usr/bin/streamlist
-
-# Enable Let's Encrypt using your domain for automatic TLS configuration.
-$ streamlist --letsencrypt --http-host music.example.com
-.503869865804371e+09    info    Streamlist URL: https://music.example.com/streamlist
-1.503869865804527e+09    info    Login credentials:  streamlist  /  1134423142
 
 ```
 

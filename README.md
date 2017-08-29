@@ -93,9 +93,9 @@ $ streamlist --letsencrypt --http-host music.example.com
 
 ```
 
-### 4. Run the Docker Image
+## Run the Docker Image
 
-#### 1. Install Docker
+### 1. Install Docker
 
 ```bash
 # Update apt
@@ -131,7 +131,7 @@ $ sudo docker run hello-world
 
 ```
 
-#### 2. Run the Docker image
+### 2. Run the Docker image
 
 The official image is `streamlist/streamlist`, which should run in any up-to-date Docker environment.
 
@@ -154,7 +154,7 @@ $ sudo docker logs -f streamlist
 
 ```
 
-#### 3. Updating the container image
+### 3. Updating the container image
 
 Pull the latest image, remove the container, and re-create the container as explained above.
 

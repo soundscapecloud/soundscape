@@ -217,7 +217,10 @@ func main() {
 			MaxHeaderBytes: maxHeaderBytes,
 		}
 		logger.Fatal(p80.ListenAndServe())
-		logger.Infof("http server %s http://%s%s", p80.Addr, httpHost, httpPrefix)
+		logger.Infof("Streamlist %q URL http://%s%s", p80.Addr, httpHost, httpPrefix)
+        if reverseProxyIP == "" {
+            logger.Infof("Login credentials:  %s  /  %s", httpUsername, authsecret.Get())
+        }
 		return
 	}
 

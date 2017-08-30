@@ -127,10 +127,10 @@ func Auth(h httprouter.Handle, optional bool) httprouter.Handle {
 			if user == httpUsername && password == authsecret.Get() {
 				ps = append(ps, httprouter.Param{Key: "user", Value: user})
 			}
-            if user != "" || optional {
+			if user != "" || optional {
 				h(w, r, ps)
 				return
-            }
+			}
 			w.Header().Set("WWW-Authenticate", `Basic realm="Sign-in Required"`)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return

@@ -123,7 +123,7 @@ streamlist:$apr1$9MuKubBu315eW3IjIy/Ci290dAtIac/
 
 Run `streamlist` on localhost port 8000 with reverse proxy authentication, using Docker or not.
 
-NOTE: You must specify `--reverse-proxy-ip` to disable basic auth and enable `X-Authenticated-User` header auth.
+**Note:** You must specify `--reverse-proxy-ip` to disable basic auth and enable `X-Authenticated-User` header auth.
 
 ```bash
 $ streamlist --http-addr 127.0.0.1:8000 --http-host music.example.com --reverse-proxy-ip 127.0.0.1
@@ -211,6 +211,9 @@ The official image is `streamlist/streamlist`, which should run in any up-to-dat
 
 # Your download directory should be bind-mounted as `/data` inside the container using the `--volume` flag.
 $ mkdir /home/<username>/Music
+
+# Set a password (default: a password is generated and printed in the log output)
+$ echo "mypassword" >$HOME/Music/.authsecret
 
 $ sudo docker create                            \
     --name streamlist --init --restart always   \

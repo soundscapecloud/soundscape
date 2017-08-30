@@ -101,6 +101,7 @@ func Log(h httprouter.Handle) httprouter.Handle {
 		// Request info
 		addr := r.RemoteAddr
 		xff := r.Header.Get("X-Forwarded-For")
+		realip := r.Header.Get("X-Real-IP")
 		method := r.Method
 		rang := r.Header.Get("Range")
 		path := r.RequestURI
@@ -112,14 +113,14 @@ func Log(h httprouter.Handle) httprouter.Handle {
 
 		// Response info
 		mime := w.Header().Get("Content-Type")
-		logger.Infof("%q %q %q %q %q %q %d ms", addr, xff, method, path, rang, mime, elapsed)
+		logger.Infof("%q %q %q %q %q %q %q %d ms", addr, xff, realip, method, path, rang, mime, elapsed)
 	}
 }
 
 func Auth(h httprouter.Handle, optional bool) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		// Method: Basic Auth (if we're not behind a reverse proxy, use basic auth)
-		if reverseProxyAuthIP == "" {
+		if authsecret != nil {
 			user, password, _ := r.BasicAuth()
 			if user == httpUsername && password == authsecret.Get() {
 				ps = append(ps, httprouter.Param{Key: "user", Value: user})
@@ -142,7 +143,6 @@ func Auth(h httprouter.Handle, optional bool) httprouter.Handle {
 
 		if clientIP == reverseProxyAuthIP {
 			user = r.Header.Get(reverseProxyAuthHeader)
-
 		}
 
 		if user == "" && !optional {

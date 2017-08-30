@@ -117,6 +117,8 @@ streamlist:$apr1$9MuKubBu315eW3IjIy/Ci290dAtIac/
 
 Run `streamlist` on localhost port 8000 with reverse proxy authentication, using Docker or not.
 
+NOTE: You must specify `--reverse-proxy-ip` to disable basic auth and enable `X-Authenticated-User` header auth.
+
 ```bash
 $ streamlist --http-addr 127.0.0.1:8000 --http-host music.example.com --reverse-proxy-ip 127.0.0.1
 
@@ -142,8 +144,12 @@ server {
         auth_basic_user_file /etc/nginx/streamlist.htpasswd;
 
         proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_set_header X-Authenticated-User $remote_user; # Sends username to Streamlist (required)
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Forwards username to Streamlist backend (required for auth)
+        proxy_set_header X-Authenticated-User $remote_user;
 
         proxy_pass http://localhost:8000;
     }
@@ -233,3 +239,30 @@ $ sudo docker create ... (see above)
 
 ```
 
+## Usage
+
+```bash
+$ streamlist --help
+Usage of streamlist:
+  -backlink string
+        backlink (optional)
+  -data-dir string
+        data directory (default "/data")
+  -debug
+        debug mode
+  -http-addr string
+        listen address (default ":80")
+  -http-host string
+        HTTP host
+  -http-prefix string
+        HTTP URL prefix (not supported yet) (default "/streamlist")
+  -http-username string
+        HTTP basic auth username (default "streamlist")
+  -letsencrypt
+        enable TLS using Let's Encrypt
+  -reverse-proxy-header string
+        reverse proxy auth header (default "X-Authenticated-User")
+  -reverse-proxy-ip string
+        reverse proxy auth IP
+
+```

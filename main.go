@@ -126,7 +126,7 @@ func main() {
 	// usage
 	usage := func(msg string) {
 		fmt.Fprintf(os.Stderr, "ERROR: "+msg+"\n\n")
-		fmt.Fprintf(os.Stderr, "Usage: %s --http-host example.com\n\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s --http-host music.example.com\n\n", os.Args[0])
 		cli.PrintDefaults()
 		os.Exit(1)
 	}
@@ -137,8 +137,8 @@ func main() {
 	}
 	httpPrefix = strings.TrimRight(httpPrefix, "/")
 
-	// auth secret
-	if reverseProxyAuthIP == "" || letsencrypt {
+	// auth secret is the password for basic auth
+	if reverseProxyAuthIP == "" {
 		authsecret = NewSecret(filepath.Join(datadir, ".authsecret"))
 	}
 
@@ -207,7 +207,7 @@ func main() {
 	httpTimeout := 48 * time.Hour
 	maxHeaderBytes := 10 * (1024 * 1024) // 10 MB
 
-	// Plain text web server for use behind a reverse proxy.
+	// Plain text web server.
 	if !letsencrypt {
 		p80 := &http.Server{
 			Handler:        r,
@@ -216,12 +216,11 @@ func main() {
 			ReadTimeout:    httpTimeout,
 			MaxHeaderBytes: maxHeaderBytes,
 		}
-		logger.Fatal(p80.ListenAndServe())
 		logger.Infof("Streamlist %q URL http://%s%s", p80.Addr, httpHost, httpPrefix)
-        if reverseProxyIP == "" {
-            logger.Infof("Login credentials:  %s  /  %s", httpUsername, authsecret.Get())
-        }
-		return
+		if authsecret != nil {
+			logger.Infof("Login credentials:  %s  /  %s", httpUsername, authsecret.Get())
+		}
+		logger.Fatal(p80.ListenAndServe())
 	}
 
 	// Let's Encrypt TLS mode
@@ -229,7 +228,7 @@ func main() {
 	// http redirect to https
 	go func() {
 		redir := httprouter.New()
-		redir.GET("/", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		redir.GET("/*path", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			r.URL.Scheme = "https"
 			r.URL.Host = httpHost
 			http.Redirect(w, r, r.URL.String(), http.StatusFound)
@@ -293,7 +292,7 @@ func main() {
 	}
 	tlsListener := tls.NewListener(tcpKeepAliveListener{tcpListener.(*net.TCPListener)}, &tlsConfig)
 
-	logger.Infof("Streamlist URL: https://%s%s", httpHost, httpPrefix)
+	logger.Infof("Streamlist on %q URL: https://%s%s/", p443.Addr, httpHost, httpPrefix)
 	logger.Infof("Login credentials:  %s  /  %s", httpUsername, authsecret.Get())
 	logger.Fatal(p443.Serve(tlsListener))
 }

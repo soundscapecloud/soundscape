@@ -84,7 +84,7 @@ $ sudo wget -O /usr/bin/streamlist \
 # Make it executable.
 $ sudo chmod +x /usr/bin/streamlist
 
-# Allow it to bind to privileged ports 80 and 443 as non-root (a potential risk).
+# Allow it to bind to privileged ports 80 and 443 as non-root (this is also a potential risk).
 $ sudo setcap cap_net_bind_service=+ep /usr/bin/streamlist
 
 # Create your streamlist directory.

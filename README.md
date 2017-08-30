@@ -115,7 +115,7 @@ streamlist:$apr1$9MuKubBu315eW3IjIy/Ci290dAtIac/
 
 #### Reverse proxying with authentication
 
-Run `streamlist` on localhost port 8000 with reverse proxy authentication.
+Run `streamlist` on localhost port 8000 with reverse proxy authentication, using Docker or not.
 
 ```bash
 $ streamlist --http-addr 127.0.0.1:8000 --http-host streamlist.cloud --reverse-proxy-ip 127.0.0.1

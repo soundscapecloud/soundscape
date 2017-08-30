@@ -96,7 +96,7 @@ $ echo "mypassword" >$HOME/Music/.authsecret
 # Run with Let's Encrypt enabled for automatic TLS setup (your server must be internet accessible).
 $ streamlist --http-host music.example.com --http-username $USER --data-dir $HOME/Music --letsencrypt
 1.503869865804371e+09    info    Streamlist URL: https://music.example.com/streamlist/
-1.503869865804527e+09    info    Login credentials:  streamlist  /  1134423142
+1.503869865804527e+09    info    Login credentials:  <username>  /  <password>
 
 ```
 
@@ -115,7 +115,7 @@ Adding password for user <username>
 
 # Verify that you've created your htpasswd file correctly.
 $ sudo cat /etc/nginx/streamlist.htpasswd
-streamlist:$apr1$9MuKubBu315eW3IjIy/Ci290dAtIac/
+<username>:$apr1$9MuKubBu315eW3IjIy/Ci290dAtIac/
 
 ```
 
@@ -232,7 +232,7 @@ $ sudo docker start streamlist
 # View logs for the container
 $ sudo docker logs -f streamlist
 1.503869865804371e+09    info    Streamlist URL: https://music.example.com/streamlist/
-1.503869865804527e+09    info    Login credentials:  streamlist  /  1134423142
+1.503869865804527e+09    info    Login credentials:  <username> /  <password>
 
 ```
 

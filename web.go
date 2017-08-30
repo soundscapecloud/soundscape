@@ -119,21 +119,24 @@ func Log(h httprouter.Handle) httprouter.Handle {
 
 func Auth(h httprouter.Handle, optional bool) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		user := ""
+
 		// Method: Basic Auth (if we're not behind a reverse proxy, use basic auth)
 		if authsecret != nil {
 			user, password, _ := r.BasicAuth()
 			if user == httpUsername && password == authsecret.Get() {
 				ps = append(ps, httprouter.Param{Key: "user", Value: user})
+			}
+            if user != "" || optional {
 				h(w, r, ps)
 				return
-			}
+            }
 			w.Header().Set("WWW-Authenticate", `Basic realm="Sign-in Required"`)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 
 		// Method: Reverse Proxy (if we're behind a reverse proxy, trust it.)
-		user := ""
 
 		clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {

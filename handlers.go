@@ -350,7 +350,7 @@ func podcastList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	proto := r.Header.Get("X-Forwarded-Proto")
 	if proto == "" {
-		proto = r.URL.Scheme
+		proto = "https"
 	}
 	baseurl := fmt.Sprintf("%s://%s%s", proto, httpHost, httpPrefix)
 
@@ -403,7 +403,7 @@ func m3uList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		fmt.Fprintf(w, "#EXTINF:%d,%s\n", media.Length, media.Title)
 		proto := r.Header.Get("X-Forwarded-Proto")
 		if proto == "" {
-			proto = r.URL.Scheme
+			proto = "https"
 		}
 		fmt.Fprintf(w, "%s://%s%s/stream/%s/%s%s\n", proto, httpHost, httpPrefix, list.ID, media.ID, ext)
 	}

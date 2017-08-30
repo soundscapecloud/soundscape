@@ -348,9 +348,11 @@ func podcastList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	p := podcast.New(list.Title, "https://"+httpHost+httpPrefix, list.Title, &list.Created, &list.Modified)
+	baseurl := fmt.Sprintf("%s://%s%s", r.URL.Scheme, httpHost, httpPrefix)
+
+	p := podcast.New(list.Title, baseurl, list.Title, &list.Created, &list.Modified)
 	p.AddAuthor(httpHost, "streamlist@"+httpHost)
-	p.AddImage(fmt.Sprintf("https://%s%s/logo.png", httpHost, httpPrefix))
+	p.AddImage(baseurl + "/logo.png")
 
 	for _, media := range list.Medias {
 		typ := podcast.M4V
@@ -363,7 +365,7 @@ func podcastList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			continue
 		}
 
-		streamurl := fmt.Sprintf("https://%s%s/stream/%s/%s.%s", httpHost, httpPrefix, list.ID, media.ID, ext)
+		streamurl := fmt.Sprintf("%s/stream/%s/%s.%s", baseurl, list.ID, media.ID, ext)
 
 		item := podcast.Item{
 			Title:       fmt.Sprintf("%s - %s", media.Title, media.Author),
@@ -395,7 +397,7 @@ func m3uList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fmt.Fprintf(w, "#EXTM3U\n")
 	for _, media := range list.Medias {
 		fmt.Fprintf(w, "#EXTINF:%d,%s\n", media.Length, media.Title)
-		fmt.Fprintf(w, "https://%s%s/stream/%s/%s%s\n", httpHost, httpPrefix, list.ID, media.ID, ext)
+		fmt.Fprintf(w, "%s://%s%s/stream/%s/%s%s\n", r.URL.Scheme, httpHost, httpPrefix, list.ID, media.ID, ext)
 	}
 }
 

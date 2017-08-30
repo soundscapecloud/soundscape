@@ -78,7 +78,8 @@ $ sudo apt-get update
 $ sudo apt-get install -y wget ffmpeg
 
 # Download the streamlist binary.
-$ sudo wget -O /usr/bin/streamlist https://raw.githubusercontent.com/streamlist/streamlist/master/streamlist-linux-amd64
+$ sudo wget -O /usr/bin/streamlist \
+    https://raw.githubusercontent.com/streamlist/streamlist/master/streamlist-linux-amd64
 
 # Make it executable.
 $ sudo chmod +x /usr/bin/streamlist
@@ -88,12 +89,71 @@ $ sudo setcap cap_net_bind_service=+ep /usr/bin/streamlist
 
 # Enable Let's Encrypt using your domain for automatic TLS configuration.
 $ streamlist --letsencrypt --http-host music.example.com
-.503869865804371e+09    info    Streamlist URL: https://music.example.com/streamlist
+1.503869865804371e+09    info    Streamlist URL: https://music.example.com/streamlist/
 1.503869865804527e+09    info    Login credentials:  streamlist  /  1134423142
 
 ```
 
+## Run behind an nginx reverse proxy
+
+### 1. Configure nginx
+
+#### Basic auth with htpasswd
+
+```bash
+# Create the htpassword file, setting a password.
+$ sudo htpasswd -c /etc/nginx/streamlist.htpasswd <username>
+New password: 
+Re-type new password: 
+Adding password for user <username>
+
+# Verify that you've created your htpasswd file correctly.
+$ sudo cat /etc/nginx/streamlist.htpasswd
+streamlist:$apr1$9MuKubBu315eW3IjIy/Ci290dAtIac/
+
+```
+
+#### Reverse proxying with authentication
+
+Run `streamlist` on localhost port 8000 with reverse proxy authentication.
+
+```bash
+$ streamlist --http-addr 127.0.0.1:8000 --http-host streamlist.cloud --reverse-proxy-ip 127.0.0.1
+
+```
+
+You might edit `/etc/nginx/sites-enabled/default` or wherever your nginx config lives.
+
+```
+server {
+    server_name music.example.com;
+    listen 80;
+
+    # Using TLS (recommended)
+    # listen 443;
+    # ssl_certificate music.example.com.crt;
+    # ssl_certificate_key music.example.com.key;
+
+    # Redirect
+    # rewrite ^/$ /streamlist/ permanent;
+
+    location /streamlist/ {
+        auth_basic "Streamlist";
+        auth_basic_user_file /etc/nginx/streamlist.htpasswd;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Authenticated-User $remote_user;
+
+        proxy_pass http://localhost:8000;
+    }
+}
+
+```
+
 ## Run the Docker Image
+
+Probably the easiest way to run Streamlist is using the Docker image.
 
 ### 1. Install Docker
 
@@ -149,7 +209,7 @@ $ sudo docker create                            \
 $ sudo docker start streamlist
 
 $ sudo docker logs -f streamlist
-1.503869865804371e+09    info    Streamlist URL: https://music.example.com/streamlist
+1.503869865804371e+09    info    Streamlist URL: https://music.example.com/streamlist/
 1.503869865804527e+09    info    Login credentials:  streamlist  /  1134423142
 
 ```

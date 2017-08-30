@@ -102,9 +102,9 @@ $ streamlist --http-host music.example.com --http-username $USER --data-dir $HOM
 
 ## Run behind an nginx reverse proxy
 
-### 1. Configure nginx
+### Configure nginx
 
-#### Basic auth with htpasswd
+#### 1. Basic auth with htpasswd
 
 ```bash
 # Create the htpassword file, setting a password.
@@ -119,7 +119,7 @@ streamlist:$apr1$9MuKubBu315eW3IjIy/Ci290dAtIac/
 
 ```
 
-#### Reverse proxying with authentication
+#### 2. Reverse proxying with authentication
 
 Run `streamlist` on localhost port 8000 with reverse proxy authentication, using Docker or not.
 

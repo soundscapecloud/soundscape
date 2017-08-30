@@ -222,8 +222,8 @@ $ sudo docker create \
     --restart always \
     --publish 80:80 \
     --publish 443:443 \
-    --volume /home/<username>/Music:/data \
-    streamlist/streamlist:latest --letsencrypt --http-host music.example.com
+    --volume $HOME/Music:/data \
+    streamlist/streamlist:latest --http-host music.example.com --http-username $USER --letsencrypt
 
 # Run the container
 $ sudo docker start streamlist

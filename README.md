@@ -210,7 +210,7 @@ The official image is `streamlist/streamlist`, which should run in any up-to-dat
 ```bash
 
 # Your download directory should be bind-mounted as `/data` inside the container using the `--volume` flag.
-$ mkdir /home/<username>/Music
+$ mkdir $HOME/Music
 
 # Set a password (default: a password is generated and printed in the log output)
 $ echo "mypassword" >$HOME/Music/.authsecret

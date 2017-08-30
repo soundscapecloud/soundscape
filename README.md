@@ -136,7 +136,7 @@ server {
     # ssl_certificate music.example.com.crt;
     # ssl_certificate_key music.example.com.key;
 
-    # Redirect
+    # Redirect requests for "/" to "/streamlist/" (or use "location / {}" below)
     # rewrite ^/$ /streamlist/ permanent;
 
     location /streamlist/ {
@@ -255,7 +255,7 @@ Usage of streamlist:
   -http-host string
         HTTP host
   -http-prefix string
-        HTTP URL prefix (not supported yet) (default "/streamlist")
+        HTTP URL prefix (not actually supported yet!) (default "/streamlist")
   -http-username string
         HTTP basic auth username (default "streamlist")
   -letsencrypt

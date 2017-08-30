@@ -61,7 +61,7 @@ func init() {
 	cli.StringVar(&httpAddr, "http-addr", ":80", "listen address")
 	cli.StringVar(&httpHost, "http-host", "", "HTTP host")
 	cli.StringVar(&httpUsername, "http-username", "streamlist", "HTTP basic auth username")
-	cli.StringVar(&httpPrefix, "http-prefix", "/streamlist", "HTTP URL prefix (not supported yet)")
+	cli.StringVar(&httpPrefix, "http-prefix", "/streamlist", "HTTP URL prefix (not actually supported yet!)")
 	cli.BoolVar(&letsencrypt, "letsencrypt", false, "enable TLS using Let's Encrypt")
 	cli.StringVar(&reverseProxyAuthHeader, "reverse-proxy-header", "X-Authenticated-User", "reverse proxy auth header")
 	cli.StringVar(&reverseProxyAuthIP, "reverse-proxy-ip", "", "reverse proxy auth IP")

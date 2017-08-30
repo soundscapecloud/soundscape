@@ -143,7 +143,7 @@ server {
 
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_set_header X-Authenticated-User $remote_user;
+        proxy_set_header X-Authenticated-User $remote_user; # Sends username to Streamlist (required)
 
         proxy_pass http://localhost:8000;
     }

@@ -215,14 +215,20 @@ $ mkdir $HOME/Music
 # Set a password (default: a password is generated and printed in the log output)
 $ echo "mypassword" >$HOME/Music/.authsecret
 
-$ sudo docker create                            \
-    --name streamlist --init --restart always   \
-    --publish 80:80 --publish 443:443           \
-    --volume /home/<username>/Music:/data   \
+# Create the container.
+$ sudo docker create \
+    --name streamlist \
+    --init \
+    --restart always \
+    --publish 80:80 \
+    --publish 443:443 \
+    --volume /home/<username>/Music:/data \
     streamlist/streamlist:latest --letsencrypt --http-host music.example.com
 
+# Run the container
 $ sudo docker start streamlist
 
+# View logs for the container
 $ sudo docker logs -f streamlist
 1.503869865804371e+09    info    Streamlist URL: https://music.example.com/streamlist/
 1.503869865804527e+09    info    Login credentials:  streamlist  /  1134423142

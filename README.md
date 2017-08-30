@@ -84,11 +84,17 @@ $ sudo wget -O /usr/bin/streamlist \
 # Make it executable.
 $ sudo chmod +x /usr/bin/streamlist
 
-# Allow it to bind to privileged ports 80 and 443.
+# Allow it to bind to privileged ports 80 and 443 as non-root (a potential risk).
 $ sudo setcap cap_net_bind_service=+ep /usr/bin/streamlist
 
-# Enable Let's Encrypt using your domain for automatic TLS configuration.
-$ streamlist --letsencrypt --http-host music.example.com
+# Create your streamlist directory.
+$ mkdir $HOME/Music
+
+# Set a password (default: a password is generated and printed in the log output)
+$ echo "mypassword" >$HOME/Music/.authsecret
+
+# Run with Let's Encrypt enabled for automatic TLS setup (your server must be internet accessible).
+$ streamlist --http-host music.example.com --http-username $USER --data-dir $HOME/Music --letsencrypt
 1.503869865804371e+09    info    Streamlist URL: https://music.example.com/streamlist/
 1.503869865804527e+09    info    Login credentials:  streamlist  /  1134423142
 

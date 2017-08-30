@@ -58,7 +58,7 @@ Create a DNS `A` record in your domain pointing to your server's IP address.
 
 **Example:** `music.example.com  A  172.16.1.1`
 
-### 3. Enable Let's Encrypt
+### 3. Enabling Let's Encrypt (optional)
 
 When enabled with the `--letsencrypt` flag, streamlist runs a TLS ("SSL") https server on port 443. It also runs a standard web server on port 80 to redirect clients to the secure server.
 

@@ -78,8 +78,7 @@ $ sudo apt-get update
 $ sudo apt-get install -y wget ffmpeg
 
 # Download the streamlist binary.
-$ sudo wget -O /usr/bin/streamlist \
-    https://raw.githubusercontent.com/streamlist/streamlist/master/streamlist-linux-amd64
+$ sudo wget -O /usr/bin/streamlist https://github.com/streamlist/streamlist/releases/download/v0.0.1/streamlist-linux-amd64 
 
 # Make it executable.
 $ sudo chmod +x /usr/bin/streamlist

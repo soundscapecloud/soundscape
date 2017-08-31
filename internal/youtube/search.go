@@ -49,7 +49,7 @@ func Search(query string) ([]Video, error) {
 	var finderr error
 	doc.Find("script").Each(func(i int, s *goquery.Selection) {
 		matches := ytdataPattern.FindStringSubmatch(s.Text())
-		if len(matches) == 0 {
+		if len(matches) < 2 {
 			return
 		}
 		match := matches[1]

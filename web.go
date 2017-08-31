@@ -126,8 +126,10 @@ func Auth(h httprouter.Handle, optional bool) httprouter.Handle {
 			user, password, _ := r.BasicAuth()
 			if user == httpUsername && password == authsecret.Get() {
 				ps = append(ps, httprouter.Param{Key: "user", Value: user})
+				h(w, r, ps)
+				return
 			}
-			if user != "" || optional {
+			if optional {
 				h(w, r, ps)
 				return
 			}

@@ -1,38 +1,24 @@
 package main
 
 import (
-	//"os"
+	"os"
 	"fmt"
-	"youtube"
-
-	log "github.com/Sirupsen/logrus"
+	"github.com/streamlist/streamlist/internal/youtube"
 )
 
 func main() {
-	//id := os.Args[1]
-	//filename := id+".mp4"
-	//video, err := youtube.GetVideo(id)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+    youtube.SetDebug()
 
-	videos, err := youtube.Search("lukas graham apologize", 5)
+	videos, err := youtube.Search(os.Args[1])
 	if err != nil {
-		log.Fatalf("search failed: %s", err)
+        fmt.Println(err)
+        os.Exit(1)
 	}
 
 	for _, v := range videos {
 		fmt.Printf("%s\n", v.ID)
 		fmt.Printf("%s\n", v.Title)
 		fmt.Printf("%s\n", v.Thumbnail)
-		fmt.Printf("%d views\n", v.Views)
 		fmt.Printf("%d seconds\n", v.Length)
-		fmt.Printf("%.1f/5\n", v.Rating)
-		fmt.Printf("\n")
-
-		//s := v.Streams[0]
-		//fmt.Printf("%s %s %s %s %d kbit/s %s\n", s.Extension, s.Resolution, s.VideoEncoding, s.AudioEncoding, s.AudioBitrate, s.URL)
-
 	}
-	// if err := v.Download(filename); err != nil { log.Fatal(err) }
 }

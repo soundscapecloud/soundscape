@@ -117,7 +117,7 @@ func configHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 func importHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var youtubes []youtube.Video
 	if query := strings.TrimSpace(r.FormValue("q")); query != "" {
-		yt, err := youtube.Search(query, 10)
+		yt, err := youtube.Search(query)
 		if err != nil {
 			Error(w, err)
 			return

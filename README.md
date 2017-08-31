@@ -89,7 +89,7 @@ $ sudo setcap cap_net_bind_service=+ep /usr/bin/streamlist
 # Create your streamlist directory.
 $ mkdir $HOME/Music
 
-# Set a password (default: a password is generated and printed in the log output)
+# (optional) Set a password (or one will be generated and printed in the log)
 $ echo "mypassword" >$HOME/Music/.authsecret
 
 # Run with Let's Encrypt enabled for automatic TLS setup (your server must be internet accessible).

@@ -2,17 +2,23 @@ package youtube
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	//log "github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 )
 
-func Search(query string, max int) ([]Video, error) {
+func SetDebug() {
+	log.SetLevel(log.DebugLevel)
+}
+
+func Search(query string) ([]Video, error) {
 	u, err := url.Parse("https://www.youtube.com/results")
 	if err != nil {
 		return nil, err
@@ -37,19 +43,58 @@ func Search(query string, max int) ([]Video, error) {
 		return nil, err
 	}
 
-	var videos []Video
+	ytdataPattern := regexp.MustCompile(`window\["ytInitialData"\]\s*=\s*(?P<ydata>\{.*?\})\s*;\s*\n`)
+
+	var ytd *ytdata
 	var finderr error
-	doc.Find(".yt-lockup-dismissable").Each(func(i int, q *goquery.Selection) {
-		// title
-		title, ok := q.Find(".yt-lockup-title > a").Attr("title")
-		if !ok {
-			finderr = err
+	doc.Find("script").Each(func(i int, s *goquery.Selection) {
+		matches := ytdataPattern.FindStringSubmatch(s.Text())
+		if len(matches) == 0 {
 			return
+		}
+		match := matches[1]
+
+		y := ytdata{}
+		if err := json.Unmarshal([]byte(match), &y); err != nil {
+			finderr = fmt.Errorf("failed to extract ytdata: %s", err)
+			return
+		}
+		ytd = &y
+	})
+	if finderr != nil {
+		return nil, finderr
+	}
+	if ytd == nil {
+		return nil, fmt.Errorf("failed to find ytdata")
+	}
+
+	// LOL
+	container := ytd.Contents.TwoColumnSearchResultsRenderer.PrimaryContents.SectionListRenderer.Contents
+	if len(container) == 0 {
+		return nil, fmt.Errorf("failed to find contents containter in ytdata")
+	}
+	contents := container[0].ItemSectionRenderer.Contents
+
+	var videos []Video
+	for _, c := range contents {
+		vr := c.VideoRenderer
+
+		// id
+		id := vr.VideoID
+		if id == "" {
+			log.Debugf("failed to find VideoID in ytdata")
+			continue
+		}
+
+		// title
+		title := vr.Title.SimpleText
+		if title == "" {
+			return nil, fmt.Errorf("failed to find Title in ytdata")
 		}
 
 		// length
 		length, err := func() (int64, error) {
-			videotime := q.Find(".video-time").Text()
+			videotime := vr.LengthText.SimpleText
 			f := strings.Split(videotime, ":")
 			switch len(f) {
 			case 2:
@@ -57,7 +102,7 @@ func Search(query string, max int) ([]Video, error) {
 			case 3:
 				videotime = fmt.Sprintf("%sh%sm%ss", f[0], f[1], f[2])
 			default:
-				return 0, fmt.Errorf("invalid video-time")
+				return 0, fmt.Errorf("invalid length text in ytdata")
 			}
 			d, err := time.ParseDuration(videotime)
 			if err != nil {
@@ -66,30 +111,12 @@ func Search(query string, max int) ([]Video, error) {
 			return int64(d.Seconds()), nil
 		}()
 		if err != nil {
-			finderr = err
-			return
+			log.Debug(err)
+			continue
 		}
-
-		// id
-		link, ok := q.Find(".yt-lockup-title > a").Attr("href")
-		if !ok {
-			finderr = fmt.Errorf("missing link")
-			return
-		}
-		id, err := func() (string, error) {
-			l, err := url.ParseRequestURI(link)
-			if err != nil {
-				return "", err
-			}
-			v := l.Query().Get("v")
-			if v == "" {
-				return "", fmt.Errorf("missing ID in link %q", link)
-			}
-			return v, nil
-		}()
-		if err != nil {
-			finderr = err
-			return
+		if title == "" {
+			log.Debugf("failed to find Length in ytdata")
+			continue
 		}
 
 		// thumbnail
@@ -101,73 +128,6 @@ func Search(query string, max int) ([]Video, error) {
 			Thumbnail: thumbnail,
 			Length:    length,
 		})
-	})
-
-	/*
-		var videos []Video
-		for _, id := range ids {
-			if len(videos) >= max {
-				break
-			}
-			v, err := GetVideo(id)
-			if err != nil {
-				log.Errorf("get %q failed: %s", id, err)
-				continue
-			}
-			videos = append(videos, v)
-		}
-	*/
-
+	}
 	return videos, nil
 }
-
-/*
-   // title
-   title, ok := q.Find(".yt-lockup-title > a").Attr("title")
-   if !ok {
-       errs = append(errs, fmt.Errorf("missing title"))
-       return
-   }
-
-   // duration
-   duration, err := func() (time.Duration, error) {
-       viewcount := q.Find(".video-time").Text()
-       f := strings.Split(viewcount, ":")
-       switch len(f) {
-       case 2:
-           viewcount = fmt.Sprintf("%sm%ss", f[0], f[1])
-       case 3:
-           viewcount = fmt.Sprintf("%sh%sm%ss", f[0], f[1], f[2])
-       }
-       return time.ParseDuration(viewcount)
-   }()
-   if err != nil {
-       errs = append(errs, err)
-       return
-   }
-
-   // created and views
-   ago := ""
-   viewcount := ""
-   q.Find(".yt-lockup-meta-info > li").Each(func(_ int, m *goquery.Selection) {
-       if strings.Contains(m.Text(), "views") {
-           viewcount = m.Text()
-           viewcount = strings.Replace(viewcount, ",", "", -1)
-           viewcount = strings.Replace(viewcount, " views", "", -1)
-       }
-       if strings.Contains(m.Text(), "ago") {
-           ago = m.Text()
-       }
-   })
-   created, err := ago2time(ago)
-   if err != nil {
-       errs = append(errs, err)
-       return
-   }
-
-   views, err := strconv.ParseInt(viewcount, 10, 64)
-   if err != nil {
-       errs = append(errs, err)
-       return
-   }
-*/

@@ -119,10 +119,10 @@ func importHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	if query := strings.TrimSpace(r.FormValue("q")); query != "" {
 		yt, err := youtube.Search(query)
 		if err != nil {
-			Error(w, err)
-			return
+			logger.Errorf("query %q failed: %s", query, err)
+		} else {
+			youtubes = append(youtubes, yt...)
 		}
-		youtubes = append(youtubes, yt...)
 	}
 
 	var filtered []youtube.Video

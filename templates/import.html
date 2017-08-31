@@ -56,6 +56,13 @@
                 {{end}}
                 </tbody>
             </table>
+        {{else}}
+            <div class="ui negative icon message">
+                <i class="warning sign icon"></i>
+                <div class="content">
+                    <div class="header">No search results! <a href="/streamlist/import?q={{$query}}">Search again</a> or <a href="/streamlist/logs">check the logs</a>.</div>
+                </div>
+            </div>
         {{end}}
     {{end}}
 </div>

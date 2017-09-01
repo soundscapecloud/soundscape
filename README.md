@@ -69,6 +69,8 @@ When enabled with the `--letsencrypt` flag, streamlist runs a TLS ("SSL") https 
 
 ### 4. Run the static binary
 
+**Latest stable release: [v0.0.2](https://github.com/streamlist/streamlist/releases/tag/v0.0.1)**
+
 Replace `amd64` with `arm64` or `armv7` depending on your architecture.
 
 ```bash
@@ -78,7 +80,7 @@ $ sudo apt-get update
 $ sudo apt-get install -y wget ffmpeg
 
 # Download the streamlist binary.
-$ sudo wget -O /usr/bin/streamlist https://github.com/streamlist/streamlist/releases/download/v0.0.1/streamlist-linux-amd64 
+$ sudo wget -O /usr/bin/streamlist https://github.com/streamlist/streamlist/releases/download/v0.0.2/streamlist-linux-amd64
 
 # Make it executable.
 $ sudo chmod +x /usr/bin/streamlist

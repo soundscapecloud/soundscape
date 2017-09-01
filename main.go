@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,6 +37,10 @@ var (
 	letsencrypt            bool
 	reverseProxyAuthHeader string
 	reverseProxyAuthIP     string
+
+	// set based on httpAddr
+	httpIP   string
+	httpPort string
 
 	// logging
 	logger  *zap.SugaredLogger
@@ -137,6 +142,12 @@ func main() {
 	}
 	httpPrefix = strings.TrimRight(httpPrefix, "/")
 
+	// http port
+	httpIP, httpPort, err := net.SplitHostPort(httpAddr)
+	if err != nil {
+		usage("invalid --http-addr")
+	}
+
 	// auth secret is the password for basic auth
 	if reverseProxyAuthIP == "" {
 		authsecret = NewSecret(filepath.Join(datadir, ".authsecret"))
@@ -209,18 +220,28 @@ func main() {
 
 	// Plain text web server.
 	if !letsencrypt {
-		p80 := &http.Server{
+		plain := &http.Server{
 			Handler:        r,
 			Addr:           httpAddr,
 			WriteTimeout:   httpTimeout,
 			ReadTimeout:    httpTimeout,
 			MaxHeaderBytes: maxHeaderBytes,
 		}
-		logger.Infof("Streamlist %q URL http://%s%s", p80.Addr, httpHost, httpPrefix)
+
+		hostport := net.JoinHostPort(httpHost, httpPort)
+		if httpPort == "80" {
+			hostport = httpHost
+		}
+		logger.Infof("Streamlist URL %s", &url.URL{
+			Scheme: "http",
+			Host:   hostport,
+			Path:   httpPrefix + "/",
+		})
+
 		if authsecret != nil {
 			logger.Infof("Login credentials:  %s  /  %s", httpUsername, authsecret.Get())
 		}
-		logger.Fatal(p80.ListenAndServe())
+		logger.Fatal(plain.ListenAndServe())
 	}
 
 	// Let's Encrypt TLS mode
@@ -230,19 +251,19 @@ func main() {
 		redir := httprouter.New()
 		redir.GET("/*path", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			r.URL.Scheme = "https"
-			r.URL.Host = httpHost
+			r.URL.Host = net.JoinHostPort(httpHost, httpPort)
 			http.Redirect(w, r, r.URL.String(), http.StatusFound)
 		})
 
-		p80 := &http.Server{
+		plain := &http.Server{
 			Handler:        redir,
-			Addr:           ":80",
+			Addr:           net.JoinHostPort(httpIP, "80"),
 			WriteTimeout:   httpTimeout,
 			ReadTimeout:    httpTimeout,
 			MaxHeaderBytes: maxHeaderBytes,
 		}
-		if err := p80.ListenAndServe(); err != nil {
-			logger.Fatal(err)
+		if err := plain.ListenAndServe(); err != nil {
+			logger.Warnf("skipping redirect http port 80 to https port %s (%s)", httpPort, err)
 		}
 	}()
 
@@ -272,11 +293,12 @@ func main() {
 	}
 
 	// Override default for TLS.
-	if httpAddr == ":80" {
-		httpAddr = ":443"
+	if httpPort == "80" {
+		httpPort = "443"
+		httpAddr = net.JoinHostPort(httpIP, httpPort)
 	}
 
-	p443 := &http.Server{
+	secure := &http.Server{
 		Handler:        r,
 		Addr:           httpAddr,
 		WriteTimeout:   httpTimeout,
@@ -292,9 +314,17 @@ func main() {
 	}
 	tlsListener := tls.NewListener(tcpKeepAliveListener{tcpListener.(*net.TCPListener)}, &tlsConfig)
 
-	logger.Infof("Streamlist on %q URL: https://%s%s/", p443.Addr, httpHost, httpPrefix)
+	hostport := net.JoinHostPort(httpHost, httpPort)
+	if httpPort == "443" {
+		hostport = httpHost
+	}
+	logger.Infof("Streamlist URL %s", &url.URL{
+		Scheme: "https",
+		Host:   hostport,
+		Path:   httpPrefix + "/",
+	})
 	logger.Infof("Login credentials:  %s  /  %s", httpUsername, authsecret.Get())
-	logger.Fatal(p443.Serve(tlsListener))
+	logger.Fatal(secure.Serve(tlsListener))
 }
 
 type tcpKeepAliveListener struct {

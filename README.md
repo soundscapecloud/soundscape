@@ -283,3 +283,42 @@ Usage of streamlist:
         reverse proxy auth IP
 
 ```
+
+## Building
+
+The easiest way to build the static binary is using the `Dockerfile.build` file.
+
+```bash
+# Clone the git repo
+$ git clone https://github.com/streamlist/streamlist.git
+
+$ cd streamlist/
+
+# Compile the code and create a Docker image for it.
+$ sudo docker build --build-arg STREAMLIST_VERSION=$(git rev-parse --short HEAD) -t streamlist:build -f Dockerfile.build .
+
+# Create a container based on the image we just built.
+$ sudo docker create --name streamlistbuild streamlist:build
+
+# Extract the binary from the image.
+$ sudo docker cp streamlistbuild:/usr/bin/streamlist-linux-amd64 streamlist-linux-amd64
+
+# armv7
+# $ sudo docker cp streamlistbuild:/usr/bin/streamlist-linux-amd64 streamlist-linux-armv7
+
+# arm64
+# $ sudo docker cp streamlistbuild:/usr/bin/streamlist-linux-amd64 streamlist-linux-arm64
+
+# We're done with the build container.
+$ sudo docker rm streamlistbuild
+
+# Inspect the binary.
+$ file streamlist-linux-amd64
+streamlist-linux-amd64: ELF 64-bit LSB  executable, x86-64, version 1 (GNU/Linux), statically linked, for GNU/Linux 2.6.32, BuildID[sha1]=c5a6f3a2e15c8ca511bec52c357ebf8f4g542233, stripped
+
+# Run the binary.
+$ ./streamlist-linux-amd64 --help
+
+# Build a tiny alpine "runner" image.
+# $ sudo docker build -t streamlist:latest .
+```

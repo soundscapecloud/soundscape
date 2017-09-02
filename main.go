@@ -232,7 +232,7 @@ func main() {
 		if httpPort == "80" {
 			hostport = httpHost
 		}
-		logger.Infof("Streamlist URL %s", &url.URL{
+		logger.Infof("Streamlist (version: %s) %s", version, &url.URL{
 			Scheme: "http",
 			Host:   hostport,
 			Path:   httpPrefix + "/",
@@ -318,7 +318,7 @@ func main() {
 	if httpPort == "443" {
 		hostport = httpHost
 	}
-	logger.Infof("Streamlist URL %s", &url.URL{
+	logger.Infof("Streamlist (version: %s) %s", version, &url.URL{
 		Scheme: "https",
 		Host:   hostport,
 		Path:   httpPrefix + "/",

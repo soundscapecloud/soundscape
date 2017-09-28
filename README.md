@@ -69,7 +69,7 @@ When enabled with the `--letsencrypt` flag, streamlist runs a TLS ("SSL") https 
 
 ### 4. Run the static binary
 
-**Latest stable release: [v0.0.2](https://github.com/streamlist/streamlist/releases/tag/v0.0.1)**
+**Latest stable release: [v0.0.2](https://github.com/streamlist/streamlist/releases/tag/v0.0.2)**
 
 Replace `amd64` with `arm64` or `armv7` depending on your architecture.
 

@@ -12,3 +12,13 @@ steps:
     candidate: ${{build}}
     registry: dockerhub
     tag: ${{CF_BRANCH_TAG_NORMALIZED}}
+
+  push-latest:
+    type: push
+    candidate: ${{build}}
+    registry: dockerhub
+    tag: latest
+    when:
+      branch:
+        only:
+          - master

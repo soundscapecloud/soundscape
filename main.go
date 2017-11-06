@@ -31,9 +31,9 @@ var (
 	datadir                string
 	debug                  bool
 	httpAddr               string
+	httpAdmins             arrayFlags
 	httpHost               string
 	httpPrefix             string
-	httpUsername           string
 	letsencrypt            bool
 	reverseProxyAuthHeader string
 	reverseProxyAuthIP     string
@@ -49,9 +49,6 @@ var (
 	// archiver
 	archive *archiver.Archiver
 
-	// secrets
-	authsecret *Secret
-
 	// config
 	config *Config
 
@@ -64,8 +61,8 @@ func init() {
 	cli.StringVar(&datadir, "data-dir", "/data", "data directory")
 	cli.BoolVar(&debug, "debug", false, "debug mode")
 	cli.StringVar(&httpAddr, "http-addr", ":80", "listen address")
+	cli.Var(&httpAdmins, "http-admin", "HTTP basic auth user/password for admin.")
 	cli.StringVar(&httpHost, "http-host", "", "HTTP host")
-	cli.StringVar(&httpUsername, "http-username", "streamlist", "HTTP basic auth username")
 	cli.StringVar(&httpPrefix, "http-prefix", "/streamlist", "HTTP URL prefix (not actually supported yet!)")
 	cli.BoolVar(&letsencrypt, "letsencrypt", false, "enable TLS using Let's Encrypt")
 	cli.StringVar(&reverseProxyAuthHeader, "reverse-proxy-header", "X-Authenticated-User", "reverse proxy auth header")
@@ -131,9 +128,14 @@ func main() {
 	// usage
 	usage := func(msg string) {
 		fmt.Fprintf(os.Stderr, "ERROR: "+msg+"\n\n")
-		fmt.Fprintf(os.Stderr, "Usage: %s --http-host music.example.com\n\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s --http-host music.example.com --http-admin 'admin:$ecUrePas$0rd'\n\n", os.Args[0])
 		cli.PrintDefaults()
 		os.Exit(1)
+	}
+
+	// http admin
+	if httpAdmins == nil && reverseProxyAuthIP == "" {
+		usage("the --http-admin or the --reverseProxyAuthIP flag is required")
 	}
 
 	// http host
@@ -146,11 +148,6 @@ func main() {
 	httpIP, httpPort, err := net.SplitHostPort(httpAddr)
 	if err != nil {
 		usage("invalid --http-addr")
-	}
-
-	// auth secret is the password for basic auth
-	if reverseProxyAuthIP == "" {
-		authsecret = NewSecret(filepath.Join(datadir, ".authsecret"))
 	}
 
 	//
@@ -238,9 +235,6 @@ func main() {
 			Path:   httpPrefix + "/",
 		})
 
-		if authsecret != nil {
-			logger.Infof("Login credentials:  %s  /  %s", httpUsername, authsecret.Get())
-		}
 		logger.Fatal(plain.ListenAndServe())
 	}
 
@@ -323,7 +317,6 @@ func main() {
 		Host:   hostport,
 		Path:   httpPrefix + "/",
 	})
-	logger.Infof("Login credentials:  %s  /  %s", httpUsername, authsecret.Get())
 	logger.Fatal(secure.Serve(tlsListener))
 }
 
@@ -339,4 +332,15 @@ func (l tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 	tc.SetKeepAlive(true)
 	tc.SetKeepAlivePeriod(10 * time.Minute)
 	return tc, nil
+}
+
+type arrayFlags []string
+
+func (i *arrayFlags) String() string {
+	return "my string representation"
+}
+
+func (i *arrayFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
 }

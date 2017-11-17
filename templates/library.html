@@ -35,15 +35,17 @@
                             {{range $list := $.Lists}}
                                 <div class="listbox">
                                     {{$hasmedia := $list.HasMedia $media}}
-                                    <button {{if $hasmedia}}style="display: none;"{{end}} class="toggler ui mini basic button" data-url="/streamlist/add/{{$list.ID}}/{{$media.ID}}"><i class="checkmark icon"></i> {{$list.Title}}</button>
-                                    <button {{if not $hasmedia}}style="display: none;"{{end}} class="toggler ui mini green button" data-url="/streamlist/remove/{{$list.ID}}/{{$media.ID}}"><i class="checkmark icon"></i> {{$list.Title}}</button>
+                                    <button {{if $hasmedia}}style="display: none;"{{end}} class="{{if $.IsAdmin}}toggler {{end}}ui mini basic button" {{if $.IsAdmin}}data-url="/streamlist/add/{{$list.ID}}/{{$media.ID}}"{{end}}><i class="checkmark icon"></i> {{$list.Title}}</button>
+                                    <button {{if not $hasmedia}}style="display: none;"{{end}} class="{{if $.IsAdmin}}toggler {{end}}ui mini green button" {{if $.IsAdmin}}data-url="/streamlist/remove/{{$list.ID}}/{{$media.ID}}"{{end}}><i class="checkmark icon"></i> {{$list.Title}}</button>
                                 </div>
                             {{end}}
                         </td>
                         <td class="right aligned four wide">
                             {{duration $media.Length}}
-                            &nbsp;&nbsp;
-                            <a href="/streamlist/media/delete/{{$media.ID}}?p={{$.Page}}&q={{$.Query}}" data-prompt="Delete {{$media.Title}}?" class="confirm"><i class="red trash icon"></i></a>
+                            {{if $.IsAdmin}}
+                              &nbsp;&nbsp;
+                              <a href="/streamlist/media/delete/{{$media.ID}}?p={{$.Page}}&q={{$.Query}}" data-prompt="Delete {{$media.Title}}?" class="confirm"><i class="red trash icon"></i></a>
+                            {{end}}
                         </td>
                     </tr>
                 {{end}}

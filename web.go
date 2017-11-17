@@ -117,14 +117,27 @@ func Log(h httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func Auth(h httprouter.Handle, optional bool) httprouter.Handle {
+func auth(h httprouter.Handle, role string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		user := ""
 
+		// none role is no auth required
+		if role == "none" {
+			h(w, r, ps)
+			return
+		}
+
 		// Method: Basic Auth (if we're not behind a reverse proxy, use basic auth)
 		if httpAdmins != nil {
-			for _, httpAdmin := range httpAdmins {
-				split := strings.Split(httpAdmin, ":")
+			var userList []string
+			// Admin are always OK
+			userList = append(userList, httpAdmins...)
+			// If role readonly, we add readonly users
+			if role == "readonly" {
+				userList = append(userList, httpReadOnlys...)
+			}
+			for _, httpUser := range userList {
+				split := strings.Split(httpUser, ":")
 				httpUsername := split[0]
 				httpPassword := split[1]
 				user, password, _ := r.BasicAuth()
@@ -133,10 +146,6 @@ func Auth(h httprouter.Handle, optional bool) httprouter.Handle {
 					h(w, r, ps)
 					return
 				}
-			}
-			if optional {
-				h(w, r, ps)
-				return
 			}
 			w.Header().Set("WWW-Authenticate", `Basic realm="Sign-in Required"`)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
@@ -155,7 +164,8 @@ func Auth(h httprouter.Handle, optional bool) httprouter.Handle {
 			user = r.Header.Get(reverseProxyAuthHeader)
 		}
 
-		if user == "" && !optional {
+		//if user == "" && !optional {
+		if user == "" {
 			logger.Errorf("auth failed: client %q", clientIP)
 			if backlink != "" {
 				http.Redirect(w, r, backlink, http.StatusFound)

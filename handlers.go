@@ -31,6 +31,7 @@ type Response struct {
 
 	Error   string
 	User    string
+	IsAdmin bool
 	Section string
 
 	// Paging
@@ -54,16 +55,28 @@ type Response struct {
 	Youtubes []youtube.Video
 }
 
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
 func NewResponse(r *http.Request, ps httprouter.Params) *Response {
 	diskInfo, err := NewDiskInfo(datadir)
 	if err != nil {
 		panic(err)
 	}
+	user, _, _ := r.BasicAuth()
+	isAdmin := stringInSlice(user, httpAdminUsers)
 	return &Response{
 		Config:   config.Get(),
 		Request:  r,
 		Params:   &ps,
 		User:     ps.ByName("user"),
+		IsAdmin:  isAdmin,
 		HTTPHost: httpHost,
 		Version:  version,
 		Backlink: backlink,

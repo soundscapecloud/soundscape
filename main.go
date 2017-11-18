@@ -174,55 +174,55 @@ func main() {
 	r.HandleMethodNotAllowed = false
 
 	// Handlers
-	r.GET("/", Log(auth(index, "readonly")))
-	r.GET(Prefix("/logs"), Log(auth(logs, "admin")))
-	r.GET(Prefix("/"), Log(auth(home, "readonly")))
+	r.GET("/", log(auth(index, "readonly")))
+	r.GET(prefix("/logs"), log(auth(logs, "admin")))
+	r.GET(prefix("/"), log(auth(home, "readonly")))
 
 	// Library
-	r.GET(Prefix("/library"), Log(auth(library, "readonly")))
+	r.GET(prefix("/library"), log(auth(library, "readonly")))
 
 	// Media
-	r.GET(Prefix("/media/thumbnail/:media"), Log(auth(thumbnailMedia, "readonly")))
-	r.GET(Prefix("/media/view/:media"), Log(auth(viewMedia, "readonly")))
-	r.GET(Prefix("/media/delete/:media"), Log(auth(deleteMedia, "admin")))
-	r.GET(Prefix("/media/access/:filename"), auth(streamMedia, "readonly"))
-	r.GET(Prefix("/media/download/:filename"), auth(downloadMedia, "readonly"))
+	r.GET(prefix("/media/thumbnail/:media"), log(auth(thumbnailMedia, "readonly")))
+	r.GET(prefix("/media/view/:media"), log(auth(viewMedia, "readonly")))
+	r.GET(prefix("/media/delete/:media"), log(auth(deleteMedia, "admin")))
+	r.GET(prefix("/media/access/:filename"), auth(streamMedia, "readonly"))
+	r.GET(prefix("/media/download/:filename"), auth(downloadMedia, "readonly"))
 
 	// Publicly accessible streaming (using playlist id as "auth")
-	r.GET(Prefix("/stream/:list/:filename"), auth(streamMedia, "none"))
+	r.GET(prefix("/stream/:list/:filename"), auth(streamMedia, "none"))
 
 	// Import
-	r.GET(Prefix("/import"), Log(auth(importHandler, "admin")))
+	r.GET(prefix("/import"), log(auth(importHandler, "admin")))
 
 	// Archiver
-	r.GET(Prefix("/archiver/jobs"), auth(archiverJobs, "admin"))
-	r.POST(Prefix("/archiver/save/:id"), Log(auth(archiverSave, "admin")))
-	r.GET(Prefix("/archiver/cancel/:id"), Log(auth(archiverCancel, "admin")))
+	r.GET(prefix("/archiver/jobs"), auth(archiverJobs, "admin"))
+	r.POST(prefix("/archiver/save/:id"), log(auth(archiverSave, "admin")))
+	r.GET(prefix("/archiver/cancel/:id"), log(auth(archiverCancel, "admin")))
 
 	// List
-	r.GET(Prefix("/create"), Log(auth(createList, "admin")))
-	r.POST(Prefix("/create"), Log(auth(createList, "admin")))
-	r.POST(Prefix("/add/:list/:media"), Log(auth(addMediaList, "admin")))
-	r.POST(Prefix("/remove/:list/:media"), Log(auth(removeMediaList, "admin")))
-	r.GET(Prefix("/remove/:list/:media"), Log(auth(removeMediaList, "admin")))
+	r.GET(prefix("/create"), log(auth(createList, "admin")))
+	r.POST(prefix("/create"), log(auth(createList, "admin")))
+	r.POST(prefix("/add/:list/:media"), log(auth(addMediaList, "admin")))
+	r.POST(prefix("/remove/:list/:media"), log(auth(removeMediaList, "admin")))
+	r.GET(prefix("/remove/:list/:media"), log(auth(removeMediaList, "admin")))
 
-	r.GET(Prefix("/edit/:id"), Log(auth(editList, "admin")))
-	r.POST(Prefix("/edit/:id"), Log(auth(editList, "admin")))
-	r.GET(Prefix("/shuffle/:id"), Log(auth(shuffleList, "admin")))
-	r.GET(Prefix("/play/:id"), Log(auth(playList, "none")))
-	r.GET(Prefix("/m3u/:id"), Log(auth(m3uList, "none")))
-	r.GET(Prefix("/podcast/:id"), Log(auth(podcastList, "none")))
+	r.GET(prefix("/edit/:id"), log(auth(editList, "admin")))
+	r.POST(prefix("/edit/:id"), log(auth(editList, "admin")))
+	r.GET(prefix("/shuffle/:id"), log(auth(shuffleList, "admin")))
+	r.GET(prefix("/play/:id"), log(auth(playList, "none")))
+	r.GET(prefix("/m3u/:id"), log(auth(m3uList, "none")))
+	r.GET(prefix("/podcast/:id"), log(auth(podcastList, "none")))
 
-	r.POST(Prefix("/config"), Log(auth(configHandler, "admin")))
+	r.POST(prefix("/config"), log(auth(configHandler, "admin")))
 
-	r.GET(Prefix("/delete/:id"), Log(auth(deleteList, "admin")))
+	r.GET(prefix("/delete/:id"), log(auth(deleteList, "admin")))
 
 	// API
-	r.GET(Prefix("/v1/status"), Log(auth(v1status, "none")))
+	r.GET(prefix("/v1/status"), log(auth(v1status, "none")))
 
 	// Assets
-	r.GET(Prefix("/static/*path"), auth(staticAsset, "none"))
-	r.GET(Prefix("/logo.png"), Log(auth(logo, "none")))
+	r.GET(prefix("/static/*path"), auth(staticAsset, "none"))
+	r.GET(prefix("/logo.png"), log(auth(logo, "none")))
 
 	//
 	// Server

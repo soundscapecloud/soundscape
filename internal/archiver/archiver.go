@@ -21,10 +21,10 @@ import (
 )
 
 var (
-	HTTPUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36"
+	httpUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36"
 )
 
-type Job struct {
+type job struct {
 	id      string
 	source  string
 	context *context.Context
@@ -35,11 +35,12 @@ type Job struct {
 	audiofile string
 }
 
+// NewArchiver returns a new Archiver
 func NewArchiver(datadir string, concurrency int, logger *zap.SugaredLogger) *Archiver {
 	a := &Archiver{
 		datadir:     datadir,
 		concurrency: concurrency,
-		active:      make(map[string]*Job),
+		active:      make(map[string]*job),
 		failed:      make(map[string]error),
 		logger:      logger,
 	}
@@ -47,29 +48,31 @@ func NewArchiver(datadir string, concurrency int, logger *zap.SugaredLogger) *Ar
 	return a
 }
 
+// Archiver object
 type Archiver struct {
 	mu          sync.RWMutex
 	datadir     string
 	concurrency int
-	queue       []*Job
-	active      map[string]*Job
+	queue       []*job
+	active      map[string]*job
 	failed      map[string]error
 	logger      *zap.SugaredLogger
 	debug       bool
 }
 
-func (a *Archiver) SetConcurrency(n int) {
-	a.lock("Concurrency")
-	defer a.unlock("Concurrency")
+func (a *Archiver) setConcurrency(n int) {
+	a.lock("concurrency")
+	defer a.unlock("concurrency")
 	a.concurrency = n
 }
 
-func (a *Archiver) Concurrency() int {
-	a.rlock("Concurrency")
-	defer a.runlock("Concurrency")
+func (a *Archiver) getConcurrency() int {
+	a.rlock("concurrency")
+	defer a.runlock("concurrency")
 	return a.concurrency
 }
 
+// QueuedJobs return job queue list
 func (a *Archiver) QueuedJobs() []string {
 	a.rlock("QueuedJobs")
 	defer a.runlock("QueuedJobID")
@@ -81,17 +84,19 @@ func (a *Archiver) QueuedJobs() []string {
 	return ids
 }
 
+// ActiveJobs return job active list
 func (a *Archiver) ActiveJobs() []string {
 	a.rlock("ActiveJobs")
 	defer a.runlock("ActiveJobs")
 	var ids []string
-	for id, _ := range a.active {
+	for id := range a.active {
 		ids = append(ids, id)
 	}
 	sort.Strings(ids)
 	return ids
 }
 
+// InProgress return true if job id is in progress
 func (a *Archiver) InProgress(id string) bool {
 	for _, job := range a.QueuedJobs() {
 		if job == id {
@@ -106,6 +111,7 @@ func (a *Archiver) InProgress(id string) bool {
 	return false
 }
 
+// Remove removes a job
 func (a *Archiver) Remove(id string) {
 	a.lock("Remove")
 	defer a.unlock("Remove")
@@ -123,6 +129,7 @@ func (a *Archiver) Remove(id string) {
 	return
 }
 
+// Add adds a job
 func (a *Archiver) Add(id string, source string) {
 	a.lock("Add")
 	defer a.unlock("Add")
@@ -165,9 +172,9 @@ func (a *Archiver) runlock(loc string) {
 	a.mu.RUnlock()
 }
 
-func (a *Archiver) newJob(id, source string) *Job {
+func (a *Archiver) newJob(id, source string) *job {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Job{
+	return &job{
 		id:        id,
 		source:    source,
 		context:   &ctx,
@@ -210,7 +217,7 @@ func (a *Archiver) manager() {
 	}
 }
 
-func (a *Archiver) archive(job *Job) {
+func (a *Archiver) archive(job *job) {
 	var failed error
 
 	// Clean up on completion.
@@ -268,7 +275,7 @@ func (a *Archiver) download(ctx context.Context, rawurl, filename string) error 
 	if err != nil {
 		return err
 	}
-	req.Header.Set("User-Agent", HTTPUserAgent)
+	req.Header.Set("User-Agent", httpUserAgent)
 	req = req.WithContext(ctx)
 
 	res, err := http.DefaultClient.Do(req)

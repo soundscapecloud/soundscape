@@ -78,13 +78,13 @@ var (
     `
 )
 
-func Redirect(w http.ResponseWriter, r *http.Request, format string, a ...interface{}) {
+func redirect(w http.ResponseWriter, r *http.Request, format string, a ...interface{}) {
 	location := httpPrefix
 	location += fmt.Sprintf(format, a...)
 	http.Redirect(w, r, location, http.StatusFound)
 }
 
-func Error(w http.ResponseWriter, err error) {
+func _error(w http.ResponseWriter, err error) {
 	logger.Error(err)
 
 	w.WriteHeader(http.StatusInternalServerError)
@@ -92,11 +92,11 @@ func Error(w http.ResponseWriter, err error) {
 	fmt.Fprintf(w, errorPageHTML)
 }
 
-func Prefix(path string) string {
+func prefix(path string) string {
 	return httpPrefix + path
 }
 
-func Log(h httprouter.Handle) httprouter.Handle {
+func log(h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		// Request info
 		addr := r.RemoteAddr
@@ -183,7 +183,7 @@ func auth(h httprouter.Handle, role string) httprouter.Handle {
 	}
 }
 
-func XML(w http.ResponseWriter, data interface{}) {
+func toXML(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	enc := xml.NewEncoder(w)
 	enc.Indent("", "    ")
@@ -192,7 +192,7 @@ func XML(w http.ResponseWriter, data interface{}) {
 	}
 }
 
-func JSON(w http.ResponseWriter, data interface{}) {
+func toJSON(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "    ")
@@ -201,7 +201,7 @@ func JSON(w http.ResponseWriter, data interface{}) {
 	}
 }
 
-func HTML(w http.ResponseWriter, target string, data interface{}) {
+func html(w http.ResponseWriter, target string, data interface{}) {
 	t := template.New(target)
 	t.Funcs(funcMap)
 	for _, filename := range AssetNames() {
@@ -211,7 +211,7 @@ func HTML(w http.ResponseWriter, target string, data interface{}) {
 		name := strings.TrimPrefix(filename, "templates/")
 		b, err := Asset(filename)
 		if err != nil {
-			Error(w, err)
+			_error(w, err)
 			return
 		}
 
@@ -222,14 +222,14 @@ func HTML(w http.ResponseWriter, target string, data interface{}) {
 			tmpl = t.New(name)
 		}
 		if _, err := tmpl.Parse(string(b)); err != nil {
-			Error(w, err)
+			_error(w, err)
 			return
 		}
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := t.Execute(w, data); err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 }

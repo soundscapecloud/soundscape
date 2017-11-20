@@ -6,9 +6,6 @@ video, audio {
     border-radius: 0 !important;
 }
 
-.navmenu img {
-}
-
 video {
     width: 100%;
     max-width: 1098px;
@@ -36,8 +33,11 @@ video {
 
 .listbox {
     display: inline-block;
-    float: left;
     margin-top: 0.25rem;
+}
+
+.float-left {
+    float: left;
 }
 
 #playerbox {

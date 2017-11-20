@@ -31,9 +31,12 @@ var (
 	datadir                string
 	debug                  bool
 	httpAddr               string
+	httpAdmins             arrayFlags
+	httpAdminUsers         []string
+	httpReadOnlys          arrayFlags
+	httpReadOnlyUsers      []string
 	httpHost               string
 	httpPrefix             string
-	httpUsername           string
 	letsencrypt            bool
 	reverseProxyAuthHeader string
 	reverseProxyAuthIP     string
@@ -49,9 +52,6 @@ var (
 	// archiver
 	archive *archiver.Archiver
 
-	// secrets
-	authsecret *Secret
-
 	// config
 	config *Config
 
@@ -64,8 +64,9 @@ func init() {
 	cli.StringVar(&datadir, "data-dir", "/data", "data directory")
 	cli.BoolVar(&debug, "debug", false, "debug mode")
 	cli.StringVar(&httpAddr, "http-addr", ":80", "listen address")
+	cli.Var(&httpAdmins, "http-admin", "HTTP basic auth user/password for admins.")
+	cli.Var(&httpReadOnlys, "http-read-only", "HTTP basic auth user/password for read only users.")
 	cli.StringVar(&httpHost, "http-host", "", "HTTP host")
-	cli.StringVar(&httpUsername, "http-username", "streamlist", "HTTP basic auth username")
 	cli.StringVar(&httpPrefix, "http-prefix", "/streamlist", "HTTP URL prefix (not actually supported yet!)")
 	cli.BoolVar(&letsencrypt, "letsencrypt", false, "enable TLS using Let's Encrypt")
 	cli.StringVar(&reverseProxyAuthHeader, "reverse-proxy-header", "X-Authenticated-User", "reverse proxy auth header")
@@ -76,6 +77,17 @@ func main() {
 	var err error
 
 	cli.Parse(os.Args[1:])
+
+	for _, httpUser := range httpAdmins {
+		split := strings.Split(httpUser, ":")
+		httpUsername := split[0]
+		httpAdminUsers = append(httpAdminUsers, httpUsername)
+	}
+	for _, httpUser := range httpReadOnlys {
+		split := strings.Split(httpUser, ":")
+		httpUsername := split[0]
+		httpReadOnlyUsers = append(httpReadOnlyUsers, httpUsername)
+	}
 
 	// logtailer
 	logtail, err = logtailer.NewLogtailer(200 * 1024)
@@ -131,9 +143,14 @@ func main() {
 	// usage
 	usage := func(msg string) {
 		fmt.Fprintf(os.Stderr, "ERROR: "+msg+"\n\n")
-		fmt.Fprintf(os.Stderr, "Usage: %s --http-host music.example.com\n\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s --http-host music.example.com --http-admin 'admin:$ecUrePas$0rd'\n\n", os.Args[0])
 		cli.PrintDefaults()
 		os.Exit(1)
+	}
+
+	// http admin
+	if httpAdmins == nil && reverseProxyAuthIP == "" {
+		usage("the --http-admin or the --reverseProxyAuthIP flag is required")
 	}
 
 	// http host
@@ -148,11 +165,6 @@ func main() {
 		usage("invalid --http-addr")
 	}
 
-	// auth secret is the password for basic auth
-	if reverseProxyAuthIP == "" {
-		authsecret = NewSecret(filepath.Join(datadir, ".authsecret"))
-	}
-
 	//
 	// Routes
 	//
@@ -162,55 +174,55 @@ func main() {
 	r.HandleMethodNotAllowed = false
 
 	// Handlers
-	r.GET("/", Log(Auth(index, false)))
-	r.GET(Prefix("/logs"), Log(Auth(logs, false)))
-	r.GET(Prefix("/"), Log(Auth(home, false)))
+	r.GET("/", log(auth(index, "readonly")))
+	r.GET(prefix("/logs"), log(auth(logs, "admin")))
+	r.GET(prefix("/"), log(auth(home, "readonly")))
 
 	// Library
-	r.GET(Prefix("/library"), Log(Auth(library, false)))
+	r.GET(prefix("/library"), log(auth(library, "readonly")))
 
 	// Media
-	r.GET(Prefix("/media/thumbnail/:media"), Log(Auth(thumbnailMedia, false)))
-	r.GET(Prefix("/media/view/:media"), Log(Auth(viewMedia, false)))
-	r.GET(Prefix("/media/delete/:media"), Log(Auth(deleteMedia, false)))
-	r.GET(Prefix("/media/access/:filename"), Auth(streamMedia, false))
-	r.GET(Prefix("/media/download/:filename"), Auth(downloadMedia, false))
+	r.GET(prefix("/media/thumbnail/:media"), log(auth(thumbnailMedia, "readonly")))
+	r.GET(prefix("/media/view/:media"), log(auth(viewMedia, "readonly")))
+	r.GET(prefix("/media/delete/:media"), log(auth(deleteMedia, "admin")))
+	r.GET(prefix("/media/access/:filename"), auth(streamMedia, "readonly"))
+	r.GET(prefix("/media/download/:filename"), auth(downloadMedia, "readonly"))
 
 	// Publicly accessible streaming (using playlist id as "auth")
-	r.GET(Prefix("/stream/:list/:filename"), Auth(streamMedia, true))
+	r.GET(prefix("/stream/:list/:filename"), auth(streamMedia, "none"))
 
 	// Import
-	r.GET(Prefix("/import"), Log(Auth(importHandler, false)))
+	r.GET(prefix("/import"), log(auth(importHandler, "admin")))
 
 	// Archiver
-	r.GET(Prefix("/archiver/jobs"), Auth(archiverJobs, false))
-	r.POST(Prefix("/archiver/save/:id"), Log(Auth(archiverSave, false)))
-	r.GET(Prefix("/archiver/cancel/:id"), Log(Auth(archiverCancel, false)))
+	r.GET(prefix("/archiver/jobs"), auth(archiverJobs, "admin"))
+	r.POST(prefix("/archiver/save/:id"), log(auth(archiverSave, "admin")))
+	r.GET(prefix("/archiver/cancel/:id"), log(auth(archiverCancel, "admin")))
 
 	// List
-	r.GET(Prefix("/create"), Log(Auth(createList, false)))
-	r.POST(Prefix("/create"), Log(Auth(createList, false)))
-	r.POST(Prefix("/add/:list/:media"), Log(Auth(addMediaList, false)))
-	r.POST(Prefix("/remove/:list/:media"), Log(Auth(removeMediaList, false)))
-	r.GET(Prefix("/remove/:list/:media"), Log(Auth(removeMediaList, false)))
+	r.GET(prefix("/create"), log(auth(createList, "admin")))
+	r.POST(prefix("/create"), log(auth(createList, "admin")))
+	r.POST(prefix("/add/:list/:media"), log(auth(addMediaList, "admin")))
+	r.POST(prefix("/remove/:list/:media"), log(auth(removeMediaList, "admin")))
+	r.GET(prefix("/remove/:list/:media"), log(auth(removeMediaList, "admin")))
 
-	r.GET(Prefix("/edit/:id"), Log(Auth(editList, false)))
-	r.POST(Prefix("/edit/:id"), Log(Auth(editList, false)))
-	r.GET(Prefix("/shuffle/:id"), Log(Auth(shuffleList, false)))
-	r.GET(Prefix("/play/:id"), Log(Auth(playList, true)))
-	r.GET(Prefix("/m3u/:id"), Log(Auth(m3uList, true)))
-	r.GET(Prefix("/podcast/:id"), Log(Auth(podcastList, true)))
+	r.GET(prefix("/edit/:id"), log(auth(editList, "admin")))
+	r.POST(prefix("/edit/:id"), log(auth(editList, "admin")))
+	r.GET(prefix("/shuffle/:id"), log(auth(shuffleList, "admin")))
+	r.GET(prefix("/play/:id"), log(auth(playList, "none")))
+	r.GET(prefix("/m3u/:id"), log(auth(m3uList, "none")))
+	r.GET(prefix("/podcast/:id"), log(auth(podcastList, "none")))
 
-	r.POST(Prefix("/config"), Log(Auth(configHandler, false)))
+	r.POST(prefix("/config"), log(auth(configHandler, "admin")))
 
-	r.GET(Prefix("/delete/:id"), Log(Auth(deleteList, false)))
+	r.GET(prefix("/delete/:id"), log(auth(deleteList, "admin")))
 
 	// API
-	r.GET(Prefix("/v1/status"), Log(Auth(v1status, true)))
+	r.GET(prefix("/v1/status"), log(auth(v1status, "none")))
 
 	// Assets
-	r.GET(Prefix("/static/*path"), Auth(staticAsset, true)) // TODO: Auth() but by checking Origin/Referer for a valid playlist ID?
-	r.GET(Prefix("/logo.png"), Log(Auth(logo, true)))
+	r.GET(prefix("/static/*path"), auth(staticAsset, "none"))
+	r.GET(prefix("/logo.png"), log(auth(logo, "none")))
 
 	//
 	// Server
@@ -238,9 +250,6 @@ func main() {
 			Path:   httpPrefix + "/",
 		})
 
-		if authsecret != nil {
-			logger.Infof("Login credentials:  %s  /  %s", httpUsername, authsecret.Get())
-		}
 		logger.Fatal(plain.ListenAndServe())
 	}
 
@@ -323,7 +332,6 @@ func main() {
 		Host:   hostport,
 		Path:   httpPrefix + "/",
 	})
-	logger.Infof("Login credentials:  %s  /  %s", httpUsername, authsecret.Get())
 	logger.Fatal(secure.Serve(tlsListener))
 }
 
@@ -339,4 +347,15 @@ func (l tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 	tc.SetKeepAlive(true)
 	tc.SetKeepAlivePeriod(10 * time.Minute)
 	return tc, nil
+}
+
+type arrayFlags []string
+
+func (i *arrayFlags) String() string {
+	return "my string representation"
+}
+
+func (i *arrayFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
 }

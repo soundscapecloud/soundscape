@@ -1,7 +1,9 @@
 {{template "header.html" .}}
 
 <div class="ui container">
-    <a class="ui right floated blue labeled icon button" href="/streamlist/create"><i class="plus icon"></i>New Playlist</a>
+    {{if $.IsAdmin}}
+      <a class="ui right floated blue labeled icon button" href="/streamlist/create"><i class="plus icon"></i>New Playlist</a>
+    {{end}}
     <div class="ui hidden clearing divider"></div>
     <h2 class="ui header">Playlists</h2>
 
@@ -22,8 +24,10 @@
                             {{with $tl := $list.TotalLength}}
                                 {{duration $tl}}
                             {{end}}
-                            &nbsp;&nbsp;
-                            <a href="/streamlist/edit/{{$list.ID}}"><i class="setting icon"></i></a>
+                            {{if $.IsAdmin}}
+                              &nbsp;&nbsp;
+                              <a href="/streamlist/edit/{{$list.ID}}"><i class="setting icon"></i></a>
+                            {{end}}
                         </td>
                     </tr>
                 {{end}}

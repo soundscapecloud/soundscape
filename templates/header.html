@@ -18,7 +18,6 @@
         <script src="/streamlist/static/semantic/semantic.min.js"></script>
     </head>
     <body>
-
         {{if $.User}}
             <div class="navmenu ui secondary menu">
                 {{if $.Backlink}}
@@ -39,9 +38,11 @@
                 <a class="item {{if eq $.Section "library"}}active{{end}}" href="/streamlist/library">
                     Library
                 </a>
-                <a class="item {{if eq $.Section "import"}}active{{end}}" href="/streamlist/import">
-                    Import
-                </a>
+                {{if $.IsAdmin}}
+                  <a class="item {{if eq $.Section "import"}}active{{end}}" href="/streamlist/import">
+                      Import
+                  </a>
+                {{end}}
             </div>
         {{end}}
 

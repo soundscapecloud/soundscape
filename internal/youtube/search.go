@@ -14,10 +14,12 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+// SetDebug ...
 func SetDebug() {
 	log.SetLevel(log.DebugLevel)
 }
 
+// Search ...
 func Search(query string) ([]Video, error) {
 	u, err := url.Parse("https://www.youtube.com/results")
 	if err != nil {

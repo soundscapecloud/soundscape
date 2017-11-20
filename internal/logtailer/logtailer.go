@@ -6,12 +6,14 @@ import (
 	"sync"
 )
 
+// Logtailer ...
 type Logtailer struct {
 	sync.RWMutex
 
 	tail *circbuf.Buffer
 }
 
+// NewLogtailer ...
 func NewLogtailer(size int64) (*Logtailer, error) {
 	buf, err := circbuf.NewBuffer(size)
 	if err != nil {
@@ -20,6 +22,7 @@ func NewLogtailer(size int64) (*Logtailer, error) {
 	return &Logtailer{tail: buf}, nil
 }
 
+// Lines ...
 func (l *Logtailer) Lines() []string {
 	l.RLock()
 	buf := l.tail.Bytes()
@@ -33,6 +36,7 @@ func (l *Logtailer) Lines() []string {
 	return strings.Split(s[start:], "\n")
 }
 
+// Write ...
 func (l *Logtailer) Write(buf []byte) (int, error) {
 	l.Lock()
 	n, err := l.tail.Write(buf)
@@ -40,6 +44,7 @@ func (l *Logtailer) Write(buf []byte) (int, error) {
 	return n, err
 }
 
+// Sync ...
 func (l *Logtailer) Sync() error {
 	return nil
 }

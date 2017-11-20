@@ -33,7 +33,7 @@
                                 </div>
                             </a>
                             {{range $list := $.Lists}}
-                                <div class="listbox">
+                                <div class="listbox float-left">
                                     {{$hasmedia := $list.HasMedia $media}}
                                     <button {{if $hasmedia}}style="display: none;"{{end}} class="{{if $.IsAdmin}}toggler {{end}}ui mini basic button" {{if $.IsAdmin}}data-url="/streamlist/add/{{$list.ID}}/{{$media.ID}}"{{end}}><i class="checkmark icon"></i> {{$list.Title}}</button>
                                     <button {{if not $hasmedia}}style="display: none;"{{end}} class="{{if $.IsAdmin}}toggler {{end}}ui mini green button" {{if $.IsAdmin}}data-url="/streamlist/remove/{{$list.ID}}/{{$media.ID}}"{{end}}><i class="checkmark icon"></i> {{$list.Title}}</button>

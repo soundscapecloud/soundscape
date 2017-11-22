@@ -1,6 +1,7 @@
 @font-face {
     font-family: 'Roboto';
-    font-style: normal;
-    font-weight: 400;
-    src: local('Roboto'), local('Roboto-Light'), url(fonts/Roboto-Light.ttf) format('truetype');
+    src: local('Roboto'), local('Roboto-Light');
+    src:  url('fonts/Roboto-Light.woff2') format('woff2'), /* Super Modern Browsers */
+          url('fonts/Roboto-Light.woff') format('woff'), /* Pretty Modern Browsers */
+	  url('fonts/Roboto-Light.ttf') format('truetype'); /* Safari, Android, iOS */
 }

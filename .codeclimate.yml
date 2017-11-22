@@ -2,6 +2,11 @@
 engines:
   csslint:
     enabled: true
+    checks:
+      important:
+        enabled: false
+      regex-selectors:
+        enabled: false
   duplication:
     enabled: true
     config:

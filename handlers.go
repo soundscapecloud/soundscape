@@ -96,6 +96,13 @@ func index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	redirect(w, r, "/")
 }
 
+/*func createUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// Create a user
+	u1 := User{Username: "admin", Password: "admin"}
+	db.Create(&u1)
+	fmt.Fprintln(w, "user created")
+}*/
+
 func home(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	lists, err := listLists()
 	if err != nil {
@@ -142,7 +149,7 @@ func importHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	for _, v := range youtubes {
 		// Already exists in library, so filter it out.
 		if m, err := loadMedia(v.ID); err == nil {
-			if m.hasAudio() || archive.InProgress(m.ID) {
+			if m.HasAudio() || archive.InProgress(m.ID) {
 				continue
 			}
 		}
@@ -432,6 +439,9 @@ func playList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	res := newResponse(r, ps)
 	res.Section = "play"
 	res.List = list
+	var medias []*Media
+	db.Model(&list).Related(&medias, "Medias")
+	res.Medias = medias
 	html(w, "play.html", res)
 }
 
@@ -517,6 +527,9 @@ func editList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	res := newResponse(r, ps)
 	res.Section = "edit"
 	res.List = list
+	var medias []*Media
+	db.Model(&list).Related(&medias, "Medias")
+	res.Medias = medias
 	html(w, "edit.html", res)
 }
 

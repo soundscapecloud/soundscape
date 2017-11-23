@@ -2,7 +2,9 @@ package main
 
 import (
 	"crypto/rand"
+	"crypto/sha512"
 	"crypto/tls"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"net"
@@ -34,7 +36,6 @@ var (
 	httpAdmins             arrayFlags
 	httpAdminUsers         []string
 	httpReadOnlys          arrayFlags
-	httpReadOnlyUsers      []string
 	httpHost               string
 	httpPrefix             string
 	letsencrypt            bool
@@ -60,6 +61,7 @@ var (
 )
 
 func init() {
+	dbInit()
 	cli.StringVar(&backlink, "backlink", "", "backlink (optional)")
 	cli.StringVar(&datadir, "data-dir", "/data", "data directory")
 	cli.BoolVar(&debug, "debug", false, "debug mode")
@@ -78,15 +80,25 @@ func main() {
 
 	cli.Parse(os.Args[1:])
 
+	// Create users in db if not exists, or set password and role if needed
 	for _, httpUser := range httpAdmins {
 		split := strings.Split(httpUser, ":")
 		httpUsername := split[0]
+		httpUserPassword := split[1]
+		hasher := sha512.New()
+		hasher.Write([]byte(httpUserPassword))
 		httpAdminUsers = append(httpAdminUsers, httpUsername)
+		var user User
+		db.Where(User{Username: httpUsername}).Assign(User{Password: hex.EncodeToString(hasher.Sum(nil)), Role: "admin"}).FirstOrCreate(&user)
 	}
 	for _, httpUser := range httpReadOnlys {
 		split := strings.Split(httpUser, ":")
 		httpUsername := split[0]
-		httpReadOnlyUsers = append(httpReadOnlyUsers, httpUsername)
+		httpUserPassword := split[1]
+		hasher := sha512.New()
+		hasher.Write([]byte(httpUserPassword))
+		var user User
+		db.Where(User{Username: httpUsername}).Assign(User{Password: hex.EncodeToString(hasher.Sum(nil)), Role: "readonly"}).FirstOrCreate(&user)
 	}
 
 	// logtailer
@@ -177,6 +189,9 @@ func main() {
 	r.GET("/", log(auth(index, "readonly")))
 	r.GET(prefix("/logs"), log(auth(logs, "admin")))
 	r.GET(prefix("/"), log(auth(home, "readonly")))
+
+	// User
+	//r.GET(prefix("/user/create"), log(auth(createUser, "none")))
 
 	// Library
 	r.GET(prefix("/library"), log(auth(library, "readonly")))

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -129,31 +131,26 @@ func auth(h httprouter.Handle, role string) httprouter.Handle {
 
 		// Method: Basic Auth (if we're not behind a reverse proxy, use basic auth)
 		if httpAdmins != nil {
-			var userList []string
-			// Admin are always OK
-			userList = append(userList, httpAdmins...)
-			// If role readonly, we add readonly users
-			if role == "readonly" {
-				userList = append(userList, httpReadOnlys...)
+			user, password, _ := r.BasicAuth()
+			// Get user in BDD
+			var userBDD User
+			var count int
+			db.Where("username = ?", user).First(&userBDD).Count(&count)
+			// Get Hash password
+			hasher := sha512.New()
+			hasher.Write([]byte(password))
+			if count == 1 && userBDD.Password == hex.EncodeToString(hasher.Sum(nil)) && (userBDD.Role == "admin" || userBDD.Role == role) {
+				ps = append(ps, httprouter.Param{Key: "user", Value: user})
+				h(w, r, ps)
+				return
 			}
-			for _, httpUser := range userList {
-				split := strings.Split(httpUser, ":")
-				httpUsername := split[0]
-				httpPassword := split[1]
-				user, password, _ := r.BasicAuth()
-				if user == httpUsername && password == httpPassword {
-					ps = append(ps, httprouter.Param{Key: "user", Value: user})
-					h(w, r, ps)
-					return
-				}
-			}
+			// Else query for auth
 			w.Header().Set("WWW-Authenticate", `Basic realm="Sign-in Required"`)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 
 		// Method: Reverse Proxy (if we're behind a reverse proxy, trust it.)
-
 		clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
 			http.NotFound(w, r)

@@ -8,8 +8,8 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"sort"
-	"strings"
+	//"sort"
+	//"strings"
 	"sync"
 	"time"
 )
@@ -75,6 +75,14 @@ func (c *Config) Save() error {
 		return err
 	}
 	return overwrite(c.filename, b, 0644)
+}
+
+// User ...
+type User struct {
+	ID       uint
+	Username string
+	Password string
+	Role     string
 }
 
 // Media represent a media in the library
@@ -180,7 +188,9 @@ func DeleteList(id string) error {
 	if err != nil {
 		return err
 	}
-	return os.Remove(list.file())
+	db.Delete(&list)
+	return db.Error
+	//return os.Remove(list.file())
 }
 
 // FindMedia search media in library
@@ -199,40 +209,31 @@ func FindMedia(id string) (*Media, error) {
 
 // LoadMedia reads media file
 func loadMedia(id string) (*Media, error) {
-	b, err := ioutil.ReadFile(mediaFile(id))
-	if err != nil {
-		return nil, err
-	}
 	var media Media
-	return &media, json.Unmarshal(b, &media)
+	db.First(&media, "ID = ?", id)
+	return &media, db.Error
 }
 
 // ListMedias list medias in library
 func ListMedias() ([]*Media, error) {
-	files, err := ioutil.ReadDir(datadir)
+	/*files, err := ioutil.ReadDir(datadir)
 	if err != nil {
 		return nil, err
 	}
 	sort.Slice(files, func(i, j int) bool {
 		return files[j].ModTime().Before(files[i].ModTime())
-	})
+	})*/
 
+	var mediasBDD []*Media
 	var medias []*Media
-	for _, f := range files {
-		if !strings.HasSuffix(f.Name(), ".media") {
-			continue
-		}
-		// media must exist.
-		m, err := loadMedia(strings.TrimSuffix(f.Name(), ".media"))
-		if err != nil {
-			return nil, err
-		}
+	db.Order("modified desc").Find(&mediasBDD)
+	for _, m := range mediasBDD {
 		// must have an image file.
 		if !m.hasImage() {
 			continue
 		}
 		// must have an audio file (otherwise it's not finished transcoding)
-		if !m.hasAudio() {
+		if !m.HasAudio() {
 			continue
 		}
 		medias = append(medias, m)
@@ -241,11 +242,7 @@ func ListMedias() ([]*Media, error) {
 }
 
 func (m Media) save() error {
-	b, err := json.MarshalIndent(m, "", "    ")
-	if err != nil {
-		return err
-	}
-	return overwrite(m.file(), b, 0644)
+	return db.Create(&m).Error
 }
 
 func (m Media) file() string {
@@ -274,7 +271,8 @@ func (m Media) hasVideo() bool {
 	return err == nil
 }
 
-func (m Media) hasAudio() bool {
+// HasAudio ...
+func (m Media) HasAudio() bool {
 	_, err := os.Stat(m.audioFile())
 	return err == nil
 }
@@ -284,7 +282,7 @@ type List struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`
 
-	Medias []*Media `json:"medias"`
+	Medias []*Media `json:"medias" gorm:"many2many:list_media;AssociationForeignKey:ID;ForeignKey:ID"`
 
 	Modified time.Time `json:"modified"`
 	Created  time.Time `json:"created"`
@@ -316,17 +314,16 @@ func (l *List) file() string {
 }
 
 func (l *List) save() error {
-	b, err := json.MarshalIndent(l, "", "    ")
-	if err != nil {
-		return err
-	}
 	l.Modified = time.Now()
-	return overwrite(l.file(), b, 0644)
+	db.Where(List{ID: l.ID}).Assign(&l).FirstOrCreate(&l)
+	return db.Error
 }
 
 // HasMedia ...
 func (l *List) HasMedia(media *Media) bool {
-	for _, m := range l.Medias {
+	var medias []Media
+	db.Model(&l).Related(&medias, "Medias")
+	for _, m := range medias {
 		if m.ID == media.ID {
 			return true
 		}
@@ -336,10 +333,19 @@ func (l *List) HasMedia(media *Media) bool {
 
 // TotalLength ...
 func (l *List) TotalLength() (total int64) {
-	for _, m := range l.Medias {
+	var medias []Media
+	db.Model(&l).Related(&medias, "Medias")
+	for _, m := range medias {
 		total += m.Length
 	}
 	return total
+}
+
+// MediasCount ...
+func (l *List) MediasCount() int {
+	var medias []Media
+	db.Model(&l).Related(&medias, "Medias")
+	return len(medias)
 }
 
 func (l *List) shuffleMedia() error {
@@ -361,28 +367,18 @@ func (l *List) removeMedia(media *Media) error {
 	if !l.HasMedia(media) {
 		return nil
 	}
-	var medias []*Media
-	for _, m := range l.Medias {
-		if m.ID == media.ID {
-			continue
-		}
-		medias = append(medias, m)
-	}
-	l.Medias = medias
-	return l.save()
+	db.Model(&l).Association("Medias").Delete(media)
+	return db.Error
 }
 
 func findList(id string) (*List, error) {
-	b, err := ioutil.ReadFile(listFile(id))
-	if err != nil {
-		return nil, err
-	}
 	var list List
-	return &list, json.Unmarshal(b, &list)
+	db.First(&list, "ID = ?", id)
+	return &list, db.Error
 }
 
 func listLists() ([]*List, error) {
-	files, err := ioutil.ReadDir(datadir)
+	/*files, err := ioutil.ReadDir(datadir)
 	if err != nil {
 		return nil, err
 	}
@@ -404,5 +400,8 @@ func listLists() ([]*List, error) {
 	sort.Slice(lists, func(i, j int) bool {
 		return lists[j].Created.Before(lists[i].Created)
 	})
-	return lists, nil
+	return lists, nil*/
+	var lists []*List
+	db.Find(&lists)
+	return lists, db.Error
 }

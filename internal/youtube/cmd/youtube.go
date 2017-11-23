@@ -1,18 +1,18 @@
 package main
 
 import (
-	"os"
 	"fmt"
 	"github.com/streamlist/streamlist/internal/youtube"
+	"os"
 )
 
 func main() {
-    youtube.SetDebug()
+	youtube.SetDebug()
 
 	videos, err := youtube.Search(os.Args[1])
 	if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	for _, v := range videos {

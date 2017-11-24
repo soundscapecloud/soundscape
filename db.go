@@ -36,7 +36,4 @@ func dbInit() {
 	db.AutoMigrate(&Media{})
 	db.AutoMigrate(&List{})
 	db.AutoMigrate(&User{})
-
-	// Add / verify foreign keys
-	db.Exec("ALTER TABLE `list_media` ADD CONSTRAINT `fk_list_id` FOREIGN KEY (`list_id`) REFERENCES `list` (`id`) ON UPDATE CASCADE ON DELETE CASCADE, ADD CONSTRAINT `fk_media_id` FOREIGN KEY (`media_id`) REFERENCES `media` (`id`) ON UPDATE CASCADE ON DELETE CASCADE;")
 }

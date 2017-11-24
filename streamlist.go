@@ -153,16 +153,9 @@ func DeleteMedia(id string) error {
 		return nil
 	}
 
-	// Remove all list references to this media.
-	lists, err := listLists()
-	if err != nil {
-		return err
-	}
-	for _, l := range lists {
-		if err := l.removeMedia(media); err != nil {
-			return err
-		}
-	}
+	// Delete associations
+	db.Exec("DELETE FROM list_media WHERE media_id = ?", media.ID)
+	db.Delete(&media)
 
 	// Remove all media files.
 	files := []string{
@@ -179,7 +172,8 @@ func DeleteMedia(id string) error {
 			return err
 		}
 	}
-	return nil
+
+	return db.Error
 }
 
 // DeleteList removes a playlist
@@ -188,6 +182,8 @@ func DeleteList(id string) error {
 	if err != nil {
 		return err
 	}
+	// Delete associations
+	db.Exec("DELETE FROM list_media WHERE list_id = ?", list.ID)
 	db.Delete(&list)
 	return db.Error
 	//return os.Remove(list.file())

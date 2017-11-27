@@ -58,6 +58,9 @@ var (
 
 	// version
 	version string
+
+	// others global vars
+	lastfmAPIKey string
 )
 
 func init() {
@@ -73,6 +76,7 @@ func init() {
 	cli.BoolVar(&letsencrypt, "letsencrypt", false, "enable TLS using Let's Encrypt")
 	cli.StringVar(&reverseProxyAuthHeader, "reverse-proxy-header", "X-Authenticated-User", "reverse proxy auth header")
 	cli.StringVar(&reverseProxyAuthIP, "reverse-proxy-ip", "", "reverse proxy auth IP")
+	lastfmAPIKey = os.Getenv("LASTFM_API_KEY")
 }
 
 func main() {
@@ -208,6 +212,9 @@ func main() {
 
 	// Import
 	r.GET(prefix("/import"), log(auth(importHandler, "admin")))
+
+	// Search
+	r.GET(prefix("/search"), log(auth(searchHandler, "admin")))
 
 	// Archiver
 	r.GET(prefix("/archiver/jobs"), auth(archiverJobs, "admin"))

@@ -40,6 +40,9 @@
                     Library
                 </a>
                 {{if $.IsAdmin}}
+                  <a class="item {{if eq $.Section "search"}}{{end}}" href="/streamlist/search">
+                      Search
+                  </a>
                   <a class="item {{if eq $.Section "import"}}{{end}}" href="/streamlist/import">
                       Import
                   </a>

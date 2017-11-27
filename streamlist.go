@@ -401,3 +401,51 @@ func listLists() ([]*List, error) {
 	db.Find(&lists)
 	return lists, db.Error
 }
+
+type lastFMArtistsResponse struct {
+	Results struct {
+		ArtistMatches struct {
+			Artist []lastFMArtist `json:"artist"`
+		}
+	}
+}
+
+type lastFMAlbumResponse struct {
+	Results struct {
+		AlbumMatches struct {
+			Album []lastFMAlbum `json:"album"`
+		}
+	}
+}
+
+type lastFMTrackResponse struct {
+	Results struct {
+		TrackMatches struct {
+			Track []lastFMTrack `json:"track"`
+		}
+	}
+}
+
+type lastFMTrack struct {
+	Name      string        `json:"name"`
+	Artist    string        `json:"artist"`
+	Image     []lastFMImage `json:"image"`
+	Listeners string        `json:"listeners"`
+}
+
+type lastFMAlbum struct {
+	Name   string        `json:"name"`
+	Artist string        `json:"artist"`
+	Image  []lastFMImage `json:"image"`
+}
+
+type lastFMArtist struct {
+	Name      string        `json:"name"`
+	Listeners string        `json:"listeners"`
+	Image     []lastFMImage `json:"image"`
+}
+
+type lastFMImage struct {
+	Text string `json:"#text"`
+	Size string `json:"size"`
+}

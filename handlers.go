@@ -2,13 +2,17 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	golog "log"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/streamlist/streamlist/internal/archiver"
 	"github.com/streamlist/streamlist/internal/youtube"
@@ -53,6 +57,11 @@ type response struct {
 	QueuedMedias []*Media
 
 	Youtubes []youtube.Video
+
+	LastFMEnabled bool
+	ArtistsList   []lastFMArtist
+	AlbumsList    []lastFMAlbum
+	TracksList    []lastFMTrack
 }
 
 func stringInSlice(a string, list []string) bool {
@@ -72,16 +81,17 @@ func newResponse(r *http.Request, ps httprouter.Params) *response {
 	user, _, _ := r.BasicAuth()
 	isAdmin := stringInSlice(user, httpAdminUsers)
 	return &response{
-		Config:   config.Get(),
-		Request:  r,
-		Params:   &ps,
-		User:     ps.ByName("user"),
-		IsAdmin:  isAdmin,
-		HTTPHost: httpHost,
-		Version:  version,
-		Backlink: backlink,
-		DiskInfo: diskInfo,
-		Archiver: archive,
+		Config:        config.Get(),
+		Request:       r,
+		Params:        &ps,
+		User:          ps.ByName("user"),
+		IsAdmin:       isAdmin,
+		HTTPHost:      httpHost,
+		Version:       version,
+		Backlink:      backlink,
+		DiskInfo:      diskInfo,
+		Archiver:      archive,
+		LastFMEnabled: lastfmAPIKey != "",
 	}
 }
 
@@ -161,6 +171,24 @@ func importHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	res.Section = "import"
 	res.Youtubes = youtubes
 	html(w, "import.html", res)
+}
+
+func searchHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var artists []lastFMArtist
+	var albums []lastFMAlbum
+	var tracks []lastFMTrack
+	if query := strings.TrimSpace(r.FormValue("q")); query != "" {
+		artists = searchArtists(query)
+		albums = searchAlbums(query)
+		tracks = searchTracks(query)
+	}
+
+	res := newResponse(r, ps)
+	res.Section = "search"
+	res.ArtistsList = artists
+	res.AlbumsList = albums
+	res.TracksList = tracks
+	html(w, "search.html", res)
 }
 
 func library(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -573,4 +601,56 @@ func v1status(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	fmt.Fprintf(w, "%s\n", status)
+}
+
+func getURL(url string) []byte {
+	fmt.Println("I GET:" + url)
+	client := &http.Client{
+		Timeout: time.Second * 2, // Maximum of 2 secs
+	}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		golog.Fatal(err)
+	}
+	req.Header.Set("User-Agent", "streamlist")
+	res, getErr := client.Do(req)
+	if getErr != nil {
+		golog.Fatal(getErr)
+	}
+	defer res.Body.Close()
+	body, readErr := ioutil.ReadAll(res.Body)
+	if readErr != nil {
+		golog.Fatal(readErr)
+	}
+	return body
+}
+
+func searchArtists(query string) []lastFMArtist {
+	url := "http://ws.audioscrobbler.com/2.0/?method=artist.search&artist=" + query + "&api_key=" + lastfmAPIKey + "&format=json"
+	body := getURL(url)
+
+	var result lastFMArtistsResponse
+	json.Unmarshal([]byte(body), &result)
+
+	return result.Results.ArtistMatches.Artist
+}
+
+func searchAlbums(query string) []lastFMAlbum {
+	url := "http://ws.audioscrobbler.com/2.0/?method=album.search&album=" + query + "&api_key=" + lastfmAPIKey + "&format=json"
+	body := getURL(url)
+
+	var result lastFMAlbumResponse
+	json.Unmarshal([]byte(body), &result)
+
+	return result.Results.AlbumMatches.Album
+}
+
+func searchTracks(query string) []lastFMTrack {
+	url := "http://ws.audioscrobbler.com/2.0/?method=track.search&track=" + query + "&api_key=" + lastfmAPIKey + "&format=json"
+	body := getURL(url)
+
+	var result lastFMTrackResponse
+	json.Unmarshal([]byte(body), &result)
+
+	return result.Results.TrackMatches.Track
 }

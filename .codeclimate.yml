@@ -7,6 +7,8 @@ engines:
         enabled: false
       regex-selectors:
         enabled: false
+      bulletproof-font-face:
+        enabled: false 
   duplication:
     enabled: true
     config:

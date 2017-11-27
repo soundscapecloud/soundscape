@@ -17,9 +17,10 @@
         <script src="/streamlist/static/jquery.min.js"></script>
         <script src="/streamlist/static/semantic/semantic.min.js"></script>
     </head>
-    <body>
+    <body class="site">
         {{if $.User}}
-            <div class="navmenu ui secondary menu">
+        <div class="ui fixed inverted menu">
+            <div class="ui container">
                 {{if $.Backlink}}
                     {{if eq $.Section "play"}}
                         <a class="item" href="/streamlist/"><i class="chevron left icon"></i></a>
@@ -32,22 +33,23 @@
                 <a class="item" href="/streamlist/">
                     <img src="/streamlist/static/logo.png">
                 </a>
-                <a class="item {{if eq $.Section "home" "edit"}}active{{end}}" href="/streamlist/">
+                <a class="item {{if eq $.Section "home" "edit"}}{{end}}" href="/streamlist/">
                     Playlists
                 </a>
-                <a class="item {{if eq $.Section "library"}}active{{end}}" href="/streamlist/library">
+                <a class="item {{if eq $.Section "library"}}{{end}}" href="/streamlist/library">
                     Library
                 </a>
                 {{if $.IsAdmin}}
-                  <a class="item {{if eq $.Section "import"}}active{{end}}" href="/streamlist/import">
+                  <a class="item {{if eq $.Section "import"}}{{end}}" href="/streamlist/import">
                       Import
                   </a>
                 {{end}}
             </div>
+        </div>
         {{end}}
 
+        <div class="ui main container">
         {{with $message := $.Request.FormValue "message"}}
-            <div class="ui container">
                 <div class="ui positive message">
                     {{if eq $message "mediadeleted"}}
                         <a href="/streamlist/library"><i class="close icon"></i></a>
@@ -71,20 +73,14 @@
                         </div>
                     {{end}}
                 </div>
-                <div class="ui hidden divider"></div>
-            </div>
         {{end}}
 
         {{with $error := $.Error}}
-            <div class="ui container">
                 <div class="ui negative icon message">
                     <i class="warning sign icon"></i>
                     <div class="content">
                         <div class="header">{{$error}}</div>
                     </div>
                 </div>
-                <div class="ui hidden divider"></div>
-            </div>
         {{end}}
 
-        <div class="full height">

@@ -1,16 +1,16 @@
-
-        </div><!--full height-->
-
-        <div class="ui container">
-            <div class="ui right floated horizontal list">
-                <div class="disabled item" href="/streamlist/">Streamlist {{$.Version}}</div>
-            </div>
-
-            <div class="ui horizontal list">
-                <div class="item">&nbsp;</div>
-            </div>
-        </div>
-
+        </div> <!--ui main container-->
+        <div class="ui inverted vertical footer segment">
+           <div class="ui container">  
+    		<div class="ui right floated horizontal list">
+		    <div class="disabled item" href="/streamlist/"><p class="version">{{$.Version}}</p></div>
+                </div>
+                <div class="contact-links">
+                    <a class="contact-link" href="https://github.com/wtfcoderz/streamlist" target="_blank"><i class="big github icon"></i></a>
+                    <a class="contact-link" href="https://wtfcoderz.slack.com" target="_blank"><i class="big slack icon"></i></a>
+		    <small><a class="license" rel="license" href="https://opensource.org/licenses/MIT">MIT Licensed</a></small>
+		</div>
+           </div>
+	</div>
         <script>
             window.pollerJob = {};
             window.poller = function(target, url, delay) {

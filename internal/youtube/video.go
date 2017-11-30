@@ -25,6 +25,7 @@ var (
 	fixurlRegexp   = regexp.MustCompile(`\,[^=]+=.*$`)
 )
 
+// Video ...
 type Video struct {
 	ID        string    `json:"id"`
 	Title     string    `json:"title"`
@@ -37,18 +38,22 @@ type Video struct {
 	Streams   []Stream
 }
 
+// Filename ...
 func (v Video) Filename(dir string) string {
 	return filepath.Join(dir, v.ID+".mp4")
 }
 
+// ThumbnailFilename ...
 func (v Video) ThumbnailFilename(dir string) string {
 	return filepath.Join(dir, v.ID+".jpg")
 }
 
+// jsonFilename ...
 func (v Video) jsonFilename(dir string) string {
 	return filepath.Join(dir, v.ID+".json")
 }
 
+// Transcode ...
 func (v Video) Transcode(ctx context.Context, dir string) error {
 	filename := v.Filename(dir)
 	tmpname := filename + ".encoding"
@@ -71,6 +76,7 @@ func (v Video) Transcode(ctx context.Context, dir string) error {
 	return nil
 }
 
+// Download ...
 func (v Video) Download(ctx context.Context, dir string) error {
 	if len(v.Streams) == 0 {
 		return fmt.Errorf("no streams")
@@ -141,6 +147,7 @@ func download(ctx context.Context, rawurl, filename string) error {
 	return err
 }
 
+// GetVideo ...
 func GetVideo(rawid string) (Video, error) {
 	id := rawid
 	if strings.HasPrefix(rawid, "http") {
@@ -293,6 +300,7 @@ func GetVideo(rawid string) (Video, error) {
 	}, nil
 }
 
+// GET ...
 func GET(ctx context.Context, rawurl string) (*http.Response, error) {
 	client := &http.Client{
 		Timeout: 15 * time.Second,

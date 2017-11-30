@@ -1,0 +1,99 @@
+{{template "header.html" .}}
+
+{{$query := $.Request.FormValue "q"}}
+
+<div class="ui container">
+    <h2 class="ui header">Search</h2>
+</div>
+
+<div class="ui hidden divider"></div>
+
+<div id="jobs" class="ui container">
+</div>
+
+<div class="ui hidden divider"></div>
+
+<div class="ui container">
+    <h3 class="ui header">Search for artists / albums / tracks</h3>
+
+    <form class="ui large form" action="/streamlist/search" method="GET">
+        <div class="sixteen wide field">
+            <input type="text" name="q" placeholder="Search" value="{{$query}}" autofocus="autofocus" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <!--div class="sixteen wide field">
+            <div class="ui hidden divider"></div>
+            <button type="submit" class="ui right floated blue button">Search</button>
+        </div-->
+    </form>
+
+    {{if $query}}
+        <div class="ui hidden divider"></div>
+        <h5 class="ui header">
+            Results for "{{$query}}"
+        </h5>
+
+        {{if not $.LastFMEnabled}}
+          <p>Please set LAST FM Api Key to get results here</p>
+        {{end}}
+
+	<div class="ui three column grid">
+	    <div class="column">
+                <p>Artists</p>
+                {{if $.ArtistsList}}
+                <table class="ui celled table">
+                    <tbody>
+                    {{range $artist := $.ArtistsList}}
+                        <tr>
+                            <td class="selectable ten wide">
+                              <a href='import?q={{$artist.Name}}'>{{$artist.Name}}</a>
+                            </td>
+                        </tr>
+                    {{end}}
+                    </tbody>
+                </table>
+                {{end}}
+            </div>
+            <div class="column">
+                <p>Albums</p>
+                {{if $.AlbumsList}}
+                <table class="ui celled table">
+                    <tbody>
+                    {{range $album := $.AlbumsList}}
+                        <tr>
+                            <td class="selectable ten wide">
+                              <a href='import?q={{$album.Artist}} {{$album.Name}} full album'>{{$album.Name}}</a>
+                            </td>
+                        </tr>
+                    {{end}}
+                    </tbody>
+                </table>
+                {{end}}
+            </div>
+						<div class="column">
+                <p>Tracks</p>
+                {{if $.TracksList}}
+                <table class="ui celled table">
+                    <tbody>
+                    {{range $track := $.TracksList}}
+                        <tr>
+                            <td class="selectable ten wide">
+                              <a href='import?q={{$track.Artist}} {{$track.Name}}'>{{$track.Name}}</a>
+                            </td>
+                        </tr>
+                    {{end}}
+                    </tbody>
+                </table>
+                {{end}}
+            </div>
+        </div>
+    {{end}}
+</div>
+
+<script>
+    $(document).ready(function() {
+        poller('#jobs', '/streamlist/archiver/jobs', 2000);
+    });
+</script>
+
+
+{{template "footer.html" .}}

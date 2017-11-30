@@ -5,10 +5,10 @@
     <div class="ui hidden clearing divider"></div>
     <h2 class="ui header">Edit {{$.List.Title}}</h2>
 
-    {{if $.List.Medias}}
+    {{if $.Medias}}
         <table class="ui fixed striped unstackable table">
             <tbody>
-                {{range $media := $.List.Medias}}
+                {{range $media := $.Medias}}
                     <tr>
                         <td class="nomobile two wide">
                             <img class="thumbnail" src="/streamlist/media/thumbnail/{{$media.ID}}">

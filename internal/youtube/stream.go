@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// Stream ...
 type Stream struct {
 	URL           string `json:"url"`
 	Extension     string `json:"extension"`

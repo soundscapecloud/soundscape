@@ -2,13 +2,17 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	golog "log"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/streamlist/streamlist/internal/archiver"
 	"github.com/streamlist/streamlist/internal/youtube"
@@ -19,18 +23,19 @@ import (
 	"github.com/rylio/ytdl"
 )
 
-type Response struct {
+type response struct {
 	Config   Config
 	Request  *http.Request
 	Params   *httprouter.Params
 	HTTPHost string
 	Version  string
 	Backlink string
-	DiskInfo *DiskInfo
+	DiskInfo *diskInfo
 	Archiver *archiver.Archiver
 
 	Error   string
 	User    string
+	IsAdmin bool
 	Section string
 
 	// Paging
@@ -52,23 +57,41 @@ type Response struct {
 	QueuedMedias []*Media
 
 	Youtubes []youtube.Video
+
+	LastFMEnabled bool
+	ArtistsList   []lastFMArtist
+	AlbumsList    []lastFMAlbum
+	TracksList    []lastFMTrack
 }
 
-func NewResponse(r *http.Request, ps httprouter.Params) *Response {
-	diskInfo, err := NewDiskInfo(datadir)
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+func newResponse(r *http.Request, ps httprouter.Params) *response {
+	diskInfo, err := newDiskInfo(datadir)
 	if err != nil {
 		panic(err)
 	}
-	return &Response{
-		Config:   config.Get(),
-		Request:  r,
-		Params:   &ps,
-		User:     ps.ByName("user"),
-		HTTPHost: httpHost,
-		Version:  version,
-		Backlink: backlink,
-		DiskInfo: diskInfo,
-		Archiver: archive,
+	user, _, _ := r.BasicAuth()
+	isAdmin := stringInSlice(user, httpAdminUsers)
+	return &response{
+		Config:        config.Get(),
+		Request:       r,
+		Params:        &ps,
+		User:          ps.ByName("user"),
+		IsAdmin:       isAdmin,
+		HTTPHost:      httpHost,
+		Version:       version,
+		Backlink:      backlink,
+		DiskInfo:      diskInfo,
+		Archiver:      archive,
+		LastFMEnabled: lastfmAPIKey != "",
 	}
 }
 
@@ -80,19 +103,26 @@ func logs(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	Redirect(w, r, "/")
+	redirect(w, r, "/")
 }
 
+/*func createUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// Create a user
+	u1 := User{Username: "admin", Password: "admin"}
+	db.Create(&u1)
+	fmt.Fprintln(w, "user created")
+}*/
+
 func home(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	lists, err := ListLists()
+	lists, err := listLists()
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
-	res := NewResponse(r, ps)
+	res := newResponse(r, ps)
 	res.Section = "home"
 	res.Lists = lists
-	HTML(w, "home.html", res)
+	html(w, "home.html", res)
 }
 
 func configHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -103,15 +133,15 @@ func configHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	case "volume":
 		n, err := strconv.ParseFloat(value, 32)
 		if err != nil {
-			Error(w, err)
+			_error(w, err)
 			return
 		}
 		if err := config.SetVolume(float32(n)); err != nil {
-			Error(w, err)
+			_error(w, err)
 			return
 		}
 	}
-	JSON(w, "OK")
+	toJSON(w, "OK")
 }
 
 func importHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -137,16 +167,34 @@ func importHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	}
 	youtubes = filtered
 
-	res := NewResponse(r, ps)
+	res := newResponse(r, ps)
 	res.Section = "import"
 	res.Youtubes = youtubes
-	HTML(w, "import.html", res)
+	html(w, "import.html", res)
+}
+
+func searchHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var artists []lastFMArtist
+	var albums []lastFMAlbum
+	var tracks []lastFMTrack
+	if query := strings.TrimSpace(r.FormValue("q")); query != "" {
+		artists = searchArtists(query)
+		albums = searchAlbums(query)
+		tracks = searchTracks(query)
+	}
+
+	res := newResponse(r, ps)
+	res.Section = "search"
+	res.ArtistsList = artists
+	res.AlbumsList = albums
+	res.TracksList = tracks
+	html(w, "search.html", res)
 }
 
 func library(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	medias, err := ListMedias()
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 
@@ -187,7 +235,7 @@ func library(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		limit = 100
 	}
 	pages := []int64{}
-	var lastpage int64 = (total / limit) + 1
+	var lastpage = (total / limit) + 1
 	for i := int64(1); i <= lastpage; i++ {
 		pages = append(pages, i)
 	}
@@ -196,19 +244,19 @@ func library(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	// chunk
-	var begin int64 = (page - 1) * limit
+	var begin = (page - 1) * limit
 	var end = begin + limit
 	if end > total {
 		end = total
 	}
 
-	lists, err := ListLists()
+	lists, err := listLists()
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 
-	res := NewResponse(r, ps)
+	res := newResponse(r, ps)
 	res.Section = "library"
 	res.Medias = medias[begin:end]
 	res.Lists = lists
@@ -218,7 +266,7 @@ func library(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	res.Limit = limit
 	res.Total = total
 	res.GrandTotal = grandTotal
-	HTML(w, "library.html", res)
+	html(w, "library.html", res)
 }
 
 //
@@ -228,13 +276,13 @@ func library(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 func thumbnailMedia(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	media, err := FindMedia(ps.ByName("media"))
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 
-	img, err := imaging.Open(media.ImageFile())
+	img, err := imaging.Open(media.imageFile())
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 
@@ -244,7 +292,7 @@ func thumbnailMedia(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	w.Header().Set("Vary", "Accept-Encoding")
 	w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%d", 7*86400))
 	if err := imaging.Encode(w, img, imaging.JPEG); err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 }
@@ -252,23 +300,23 @@ func thumbnailMedia(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 func viewMedia(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	media, err := FindMedia(ps.ByName("media"))
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 
-	res := NewResponse(r, ps)
+	res := newResponse(r, ps)
 	res.Media = media
 	res.Section = "library"
 	res.Section = "view"
-	HTML(w, "view.html", res)
+	html(w, "view.html", res)
 }
 
 func deleteMedia(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if err := DeleteMedia(ps.ByName("media")); err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
-	Redirect(w, r, "/library?p=%s&q=%s&message=mediadeleted", r.FormValue("p"), r.FormValue("q"))
+	redirect(w, r, "/library?p=%s&q=%s&message=mediadeleted", r.FormValue("p"), r.FormValue("q"))
 }
 
 func downloadMedia(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -280,8 +328,8 @@ func downloadMedia(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 func streamMedia(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	filename := filepath.Join(datadir, ps.ByName("filename"))
 	if id := ps.ByName("list"); id != "" {
-		if _, err := FindList(id); err != nil {
-			Error(w, err)
+		if _, err := findList(id); err != nil {
+			_error(w, err)
 			return
 		}
 	}
@@ -296,10 +344,10 @@ func streamMedia(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 //
 
 func archiverJobs(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	res := NewResponse(r, ps)
+	res := newResponse(r, ps)
 	res.ActiveMedias = ActiveMedias()
 	res.QueuedMedias = QueuedMedias()
-	HTML(w, "jobs.html", res)
+	html(w, "jobs.html", res)
 }
 
 func archiverSave(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -308,41 +356,41 @@ func archiverSave(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 
 	vinfo, err := ytdl.GetVideoInfoFromID(id)
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 
 	media, err := NewMedia(vinfo.ID, vinfo.Author, vinfo.Title, int64(vinfo.Duration.Seconds()), source)
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 	logger.Infof("created new media %q %q", media.ID, media.Title)
 
 	archive.Add(id, source)
-	JSON(w, "OK")
+	toJSON(w, "OK")
 }
 
 func archiverCancel(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	archive.Remove(ps.ByName("id"))
-	Redirect(w, r, "/import?message=savecancelled")
+	redirect(w, r, "/import?message=savecancelled")
 }
 
 func deleteList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	list, err := FindList(ps.ByName("id"))
+	list, err := findList(ps.ByName("id"))
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 	if err := DeleteList(list.ID); err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
-	Redirect(w, r, "/?message=playlistdeleted")
+	redirect(w, r, "/?message=playlistdeleted")
 }
 
 func podcastList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	list, err := FindList(ps.ByName("id"))
+	list, err := findList(ps.ByName("id"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -361,7 +409,7 @@ func podcastList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	for _, media := range list.Medias {
 		typ := podcast.M4V
 		ext := "m4a"
-		filename := media.AudioFile()
+		filename := media.audioFile()
 
 		fileInfo, err := os.Stat(filename)
 		if err != nil {
@@ -378,18 +426,18 @@ func podcastList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 		item.AddEnclosure(streamurl, typ, fileInfo.Size())
 		if _, err := p.AddItem(item); err != nil {
-			Error(w, err)
+			_error(w, err)
 			return
 		}
 	}
 	w.Header().Set("Content-Type", "application/rss+xml; charset=utf-8")
 	if err := p.Encode(w); err != nil {
-		Error(w, err)
+		_error(w, err)
 	}
 }
 
 func m3uList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	list, err := FindList(ps.ByName("id"))
+	list, err := findList(ps.ByName("id"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -410,101 +458,107 @@ func m3uList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func playList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	list, err := FindList(ps.ByName("id"))
+	list, err := findList(ps.ByName("id"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	res := NewResponse(r, ps)
+	res := newResponse(r, ps)
 	res.Section = "play"
 	res.List = list
-	HTML(w, "play.html", res)
+	var medias []*Media
+	db.Model(&list).Related(&medias, "Medias")
+	res.Medias = medias
+	html(w, "play.html", res)
 }
 
 func createList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if r.Method == "GET" {
-		res := NewResponse(r, ps)
+		res := newResponse(r, ps)
 		res.Section = "create"
-		HTML(w, "create.html", res)
+		html(w, "create.html", res)
 		return
 	}
 
 	title := strings.TrimSpace(r.FormValue("title"))
 
 	if title == "" {
-		Redirect(w, r, "/create")
+		redirect(w, r, "/create")
 		return
 	}
 
-	_, err := NewList(title)
+	_, err := newList(title)
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
-	Redirect(w, r, "/library?message=playlistadded")
+	redirect(w, r, "/library?message=playlistadded")
 }
 
 func removeMediaList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	media, err := FindMedia(ps.ByName("media"))
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
-	list, err := FindList(ps.ByName("list"))
+	list, err := findList(ps.ByName("list"))
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
-	if err := list.RemoveMedia(media); err != nil {
-		Error(w, err)
+	if err := list.removeMedia(media); err != nil {
+		_error(w, err)
 		return
 	}
-	Redirect(w, r, "/edit/%s", list.ID)
+	redirect(w, r, "/edit/%s", list.ID)
 }
 
 func addMediaList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	media, err := FindMedia(ps.ByName("media"))
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 
-	list, err := FindList(ps.ByName("list"))
+	list, err := findList(ps.ByName("list"))
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 
-	list.AddMedia(media)
-	JSON(w, "OK")
+	list.addMedia(media)
+	toJSON(w, "OK")
 }
 
 func shuffleList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	list, err := FindList(ps.ByName("id"))
+	list, err := findList(ps.ByName("id"))
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
-	if err := list.ShuffleMedia(); err != nil {
-		Error(w, err)
+	if err := list.shuffleMedia(); err != nil {
+		_error(w, err)
 		return
 	}
 
-	Redirect(w, r, "/play/%s", list.ID)
+	redirect(w, r, "/play/%s", list.ID)
 }
 
 func editList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	list, err := FindList(ps.ByName("id"))
+	list, err := findList(ps.ByName("id"))
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 
-	res := NewResponse(r, ps)
+	res := newResponse(r, ps)
 	res.Section = "edit"
 	res.List = list
-	HTML(w, "edit.html", res)
+	var medias []*Media
+	db.Model(&list).Related(&medias, "Medias")
+	res.Medias = medias
+	html(w, "edit.html", res)
 }
 
 func staticAsset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -525,7 +579,7 @@ func serveAsset(w http.ResponseWriter, r *http.Request, filename string) {
 	}
 	fi, err := AssetInfo(path)
 	if err != nil {
-		Error(w, err)
+		_error(w, err)
 		return
 	}
 	http.ServeContent(w, r, path, fi.ModTime(), bytes.NewReader(b))
@@ -547,4 +601,56 @@ func v1status(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	fmt.Fprintf(w, "%s\n", status)
+}
+
+func getURL(url string) []byte {
+	fmt.Println("I GET:" + url)
+	client := &http.Client{
+		Timeout: time.Second * 2, // Maximum of 2 secs
+	}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		golog.Fatal(err)
+	}
+	req.Header.Set("User-Agent", "streamlist")
+	res, getErr := client.Do(req)
+	if getErr != nil {
+		golog.Fatal(getErr)
+	}
+	defer res.Body.Close()
+	body, readErr := ioutil.ReadAll(res.Body)
+	if readErr != nil {
+		golog.Fatal(readErr)
+	}
+	return body
+}
+
+func searchArtists(query string) []lastFMArtist {
+	url := "http://ws.audioscrobbler.com/2.0/?method=artist.search&artist=" + query + "&api_key=" + lastfmAPIKey + "&format=json"
+	body := getURL(url)
+
+	var result lastFMArtistsResponse
+	json.Unmarshal([]byte(body), &result)
+
+	return result.Results.ArtistMatches.Artist
+}
+
+func searchAlbums(query string) []lastFMAlbum {
+	url := "http://ws.audioscrobbler.com/2.0/?method=album.search&album=" + query + "&api_key=" + lastfmAPIKey + "&format=json"
+	body := getURL(url)
+
+	var result lastFMAlbumResponse
+	json.Unmarshal([]byte(body), &result)
+
+	return result.Results.AlbumMatches.Album
+}
+
+func searchTracks(query string) []lastFMTrack {
+	url := "http://ws.audioscrobbler.com/2.0/?method=track.search&track=" + query + "&api_key=" + lastfmAPIKey + "&format=json"
+	body := getURL(url)
+
+	var result lastFMTrackResponse
+	json.Unmarshal([]byte(body), &result)
+
+	return result.Results.TrackMatches.Track
 }

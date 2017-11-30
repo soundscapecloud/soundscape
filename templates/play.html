@@ -28,7 +28,7 @@
         <div id="playerbox">
             <table class="ui single line fixed inverted unstackable table">
                 <tbody>
-                    {{range $n, $media := $.List.Medias}}
+                    {{range $n, $media := $.Medias}}
 
                         <tr class="player-item" id="player-item-{{$n}}" data-index="{{$n}}">
                             <td class="eleven wide">
@@ -71,7 +71,7 @@
 
         // create playlist
         var playlist = [];
-        {{range $media := $.List.Medias}}
+        {{range $media := $.Medias}}
             playlist.push('/streamlist/stream/{{$.List.ID}}/{{$media.ID}}.m4a');
         {{end}}
 

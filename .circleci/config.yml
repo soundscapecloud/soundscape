@@ -10,3 +10,9 @@ jobs:
           name: Build Docker Image
           command: |
             docker build -t $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME:$CIRCLE_BRANCH .
+      - run:
+          name: Push DockerHub
+          command: |
+            docker login -u $DOCKER_USER -p DOCKER_PASS
+            docker push $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME:$CIRCLE_BRANCH
+            

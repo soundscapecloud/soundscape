@@ -4,7 +4,6 @@
 
 ![Screenshot - Playlists](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot1.png)
 ![Screenshot - Library](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot2.png)
-![Screenshot - Import](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot3.png)
 
 ## Features
 

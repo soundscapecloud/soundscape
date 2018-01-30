@@ -1,25 +1,23 @@
 {{template "header.html" .}}
 
 <div class="ui container">
-    <a class="ui large right floated blue labeled icon button" href="/streamlist/play/{{$.List.ID}}"><i class="play icon"></i>Play</a>
+    <a class="ui large right floated large green button" href="/soundscape/play/{{$.List.ID}}"><i class="play icon"></i>Play</a>
+    <h2 class="ui header">Editing &quot;{{$.List.Title}}&quot;</h2>
     <div class="ui hidden clearing divider"></div>
-    <h2 class="ui header">Edit {{$.List.Title}}</h2>
 
     {{if $.List.Medias}}
-        <table class="ui fixed striped unstackable table">
+        <table class="ui fixed striped unstackable large table">
             <tbody>
                 {{range $media := $.List.Medias}}
                     <tr>
-                        <td class="nomobile two wide">
-                            <img class="thumbnail" src="/streamlist/media/thumbnail/{{$media.ID}}">
-                        </td>
-                        <td class="ten wide">
-                            <div class="truncate">{{$media.Title}}</div>
+                        <td class="twelve wide">
+                            <div class="breakup">
+                                <a href="/soundscape/remove/{{$.List.ID}}/{{$media.ID}}"><i class="red minus circle icon"></i></a>
+                                {{$media.Title}}
+                            </div>
                         </td>
                         <td class="right aligned four wide">
                             {{duration $media.Length}}
-                            &nbsp;&nbsp;
-                            <a href="/streamlist/remove/{{$.List.ID}}/{{$media.ID}}"><i class="red remove icon"></i></a>
                         </td>
                     </tr>
                 {{end}}
@@ -29,8 +27,11 @@
         <div class="ui hidden divider"></div>
         <div class="ui large message">
             <div class="header">
-                This playlist has no media. Add media from your <a href="/streamlist/library">Library</a>.
+                This playlist has no media
             </div>
+            <p>
+                Add media from your <a href="/soundscape/library">Library</a>.
+            </p>
         </div>
         <div class="ui hidden divider"></div>
     {{end}}
@@ -39,7 +40,7 @@
     <div class="ui hidden divider"></div>
     <div class="ui hidden divider"></div>
 
-    <a href="/streamlist/delete/{{$.List.ID}}" data-prompt="Delete {{$.List.Title}}?" class="confirm ui left floated red labeled basic icon button"><i class="trash icon"></i>Delete</a>
+    <a href="/soundscape/delete/{{$.List.ID}}" data-prompt="Delete {{$.List.Title}}?" class="confirm ui right floated red labeled basic icon button"><i class="trash icon"></i>Delete</a>
     <div class="ui hidden clearing divider"></div>
 
 </div>

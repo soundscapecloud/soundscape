@@ -1,11 +1,11 @@
 FROM golang:1.9
-MAINTAINER Streamlist <github@streamlist.cloud>
+MAINTAINER Soundscape <github@soundscape.cloud>
 
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /go/src/github.com/streamlist/streamlist
+WORKDIR /go/src/github.com/soundscapecloud/soundscape
 
-ARG STREAMLIST_VERSION=unknown
+ARG BUILD_VERSION=unknown
 
 ENV GODEBUG="netdns=go http2server=0"
 ENV GOPATH="/go"
@@ -32,11 +32,11 @@ RUN go fmt && \
     go-bindata --pkg main static/... templates/...
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build -v --compiler gc --ldflags "-extldflags -static -s -w -X main.version=${STREAMLIST_VERSION}" -o /usr/bin/streamlist-linux-amd64
+    go build -v --compiler gc --ldflags "-extldflags -static -s -w -X main.version=${BUILD_VERSION}" -o /usr/bin/soundscape-linux-amd64
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 \
-    go build -v --compiler gc --ldflags "-extldflags -static -s -w -X main.version=${STREAMLIST_VERSION}" -o /usr/bin/streamlist-linux-armv7
+    go build -v --compiler gc --ldflags "-extldflags -static -s -w -X main.version=${BUILD_VERSION}" -o /usr/bin/soundscape-linux-armv7
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
-    go build -v --compiler gc --ldflags "-extldflags -static -s -w -X main.version=${STREAMLIST_VERSION}" -o /usr/bin/streamlist-linux-arm64
+    go build -v --compiler gc --ldflags "-extldflags -static -s -w -X main.version=${BUILD_VERSION}" -o /usr/bin/soundscape-linux-arm64
 

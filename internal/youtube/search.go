@@ -1,10 +1,8 @@
 package youtube
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"regexp"
 	"strings"
@@ -33,12 +31,7 @@ func Search(query string) ([]Video, error) {
 	}
 	defer res.Body.Close()
 
-	b, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer(b))
+	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
 		return nil, err
 	}

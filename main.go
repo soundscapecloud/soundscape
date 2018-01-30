@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/streamlist/streamlist/internal/archiver"
-	"github.com/streamlist/streamlist/internal/logtailer"
+	"github.com/soundscapecloud/soundscape/internal/archiver"
+	"github.com/soundscapecloud/soundscape/internal/logtailer"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -30,6 +30,7 @@ var (
 	backlink               string
 	datadir                string
 	debug                  bool
+	showVersion            bool
 	httpAddr               string
 	httpHost               string
 	httpPrefix             string
@@ -63,10 +64,11 @@ func init() {
 	cli.StringVar(&backlink, "backlink", "", "backlink (optional)")
 	cli.StringVar(&datadir, "data-dir", "/data", "data directory")
 	cli.BoolVar(&debug, "debug", false, "debug mode")
+	cli.BoolVar(&showVersion, "version", false, "display version and exit")
 	cli.StringVar(&httpAddr, "http-addr", ":80", "listen address")
 	cli.StringVar(&httpHost, "http-host", "", "HTTP host")
-	cli.StringVar(&httpUsername, "http-username", "streamlist", "HTTP basic auth username")
-	cli.StringVar(&httpPrefix, "http-prefix", "/streamlist", "HTTP URL prefix (not actually supported yet!)")
+	cli.StringVar(&httpUsername, "http-username", "soundscape", "HTTP basic auth username")
+	cli.StringVar(&httpPrefix, "http-prefix", "/soundscape", "HTTP URL prefix (not actually supported yet!)")
 	cli.BoolVar(&letsencrypt, "letsencrypt", false, "enable TLS using Let's Encrypt")
 	cli.StringVar(&reverseProxyAuthHeader, "reverse-proxy-header", "X-Authenticated-User", "reverse proxy auth header")
 	cli.StringVar(&reverseProxyAuthIP, "reverse-proxy-ip", "", "reverse proxy auth IP")
@@ -76,6 +78,11 @@ func main() {
 	var err error
 
 	cli.Parse(os.Args[1:])
+
+	if showVersion {
+		fmt.Printf("Soundscape version: %s", version)
+		os.Exit(0)
+	}
 
 	// logtailer
 	logtail, err = logtailer.NewLogtailer(200 * 1024)
@@ -117,6 +124,18 @@ func main() {
 		if err := os.MkdirAll(datadir, 0755); err != nil {
 			logger.Fatal(err)
 		}
+
+		// default playlist
+		lists, err := ListLists()
+		if err != nil {
+			logger.Fatal(err)
+		}
+		if len(lists) == 0 {
+			_, err := NewList("My Music")
+			if err != nil {
+				logger.Fatal(err)
+			}
+		}
 	}
 
 	// remove any temporary transcode files
@@ -145,7 +164,7 @@ func main() {
 	// http port
 	httpIP, httpPort, err := net.SplitHostPort(httpAddr)
 	if err != nil {
-		usage("invalid --http-addr")
+		usage("invalid --http-addr: " + err.Error())
 	}
 
 	// auth secret is the password for basic auth
@@ -165,16 +184,20 @@ func main() {
 	r.GET("/", Log(Auth(index, false)))
 	r.GET(Prefix("/logs"), Log(Auth(logs, false)))
 	r.GET(Prefix("/"), Log(Auth(home, false)))
+	r.GET(Prefix(""), Log(Auth(home, false)))
 
 	// Library
 	r.GET(Prefix("/library"), Log(Auth(library, false)))
+
+	// Help
+	r.GET(Prefix("/help"), Log(Auth(help, false)))
 
 	// Media
 	r.GET(Prefix("/media/thumbnail/:media"), Log(Auth(thumbnailMedia, false)))
 	r.GET(Prefix("/media/view/:media"), Log(Auth(viewMedia, false)))
 	r.GET(Prefix("/media/delete/:media"), Log(Auth(deleteMedia, false)))
 	r.GET(Prefix("/media/access/:filename"), Auth(streamMedia, false))
-	r.GET(Prefix("/media/download/:filename"), Auth(downloadMedia, false))
+	r.GET(Prefix("/media/download/:media"), Auth(downloadMedia, false))
 
 	// Publicly accessible streaming (using playlist id as "auth")
 	r.GET(Prefix("/stream/:list/:filename"), Auth(streamMedia, true))
@@ -208,6 +231,28 @@ func main() {
 	// API
 	r.GET(Prefix("/v1/status"), Log(Auth(v1status, true)))
 
+	// Subsonic API
+	r.GET("/rest/ping.view", Log(Auth(subsonicPing, true)))
+	r.POST("/rest/ping.view", Log(Auth(subsonicPing, true)))
+
+	r.GET("/rest/getMusicFolders.view", Log(Auth(subsonicGetMusicFolders, true)))
+	r.POST("/rest/getMusicFolders.view", Log(Auth(subsonicGetMusicFolders, true)))
+
+	r.GET("/rest/getIndexes.view", Log(Auth(subsonicGetIndexes, true)))
+	r.POST("/rest/getIndexes.view", Log(Auth(subsonicGetIndexes, true)))
+
+	r.GET("/rest/getPlaylists.view", Log(Auth(subsonicGetPlaylists, true)))
+	r.POST("/rest/getPlaylists.view", Log(Auth(subsonicGetPlaylists, true)))
+
+	r.GET("/rest/getPlaylist.view", Log(Auth(subsonicGetPlaylist, true)))
+	r.POST("/rest/getPlaylist.view", Log(Auth(subsonicGetPlaylist, true)))
+
+	r.GET("/rest/getCoverArt.view", Log(Auth(subsonicGetCoverArt, true)))
+	r.POST("/rest/getCoverArt.view", Log(Auth(subsonicGetCoverArt, true)))
+
+	r.GET("/rest/getLyrics.view", Log(Auth(subsonicGetLyrics, true)))
+	r.POST("/rest/getLyrics.view", Log(Auth(subsonicGetLyrics, true)))
+
 	// Assets
 	r.GET(Prefix("/static/*path"), Auth(staticAsset, true)) // TODO: Auth() but by checking Origin/Referer for a valid playlist ID?
 	r.GET(Prefix("/logo.png"), Log(Auth(logo, true)))
@@ -220,7 +265,7 @@ func main() {
 
 	// Plain text web server.
 	if !letsencrypt {
-		plain := &http.Server{
+		httpd := &http.Server{
 			Handler:        r,
 			Addr:           httpAddr,
 			WriteTimeout:   httpTimeout,
@@ -232,7 +277,7 @@ func main() {
 		if httpPort == "80" {
 			hostport = httpHost
 		}
-		logger.Infof("Streamlist (version: %s) %s", version, &url.URL{
+		logger.Infof("Soundscape version: %s %s", version, &url.URL{
 			Scheme: "http",
 			Host:   hostport,
 			Path:   httpPrefix + "/",
@@ -241,7 +286,7 @@ func main() {
 		if authsecret != nil {
 			logger.Infof("Login credentials:  %s  /  %s", httpUsername, authsecret.Get())
 		}
-		logger.Fatal(plain.ListenAndServe())
+		logger.Fatal(httpd.ListenAndServe())
 	}
 
 	// Let's Encrypt TLS mode
@@ -255,14 +300,14 @@ func main() {
 			http.Redirect(w, r, r.URL.String(), http.StatusFound)
 		})
 
-		plain := &http.Server{
+		httpd := &http.Server{
 			Handler:        redir,
 			Addr:           net.JoinHostPort(httpIP, "80"),
 			WriteTimeout:   httpTimeout,
 			ReadTimeout:    httpTimeout,
 			MaxHeaderBytes: maxHeaderBytes,
 		}
-		if err := plain.ListenAndServe(); err != nil {
+		if err := httpd.ListenAndServe(); err != nil {
 			logger.Warnf("skipping redirect http port 80 to https port %s (%s)", httpPort, err)
 		}
 	}()
@@ -298,7 +343,7 @@ func main() {
 		httpAddr = net.JoinHostPort(httpIP, httpPort)
 	}
 
-	secure := &http.Server{
+	httpsd := &http.Server{
 		Handler:        r,
 		Addr:           httpAddr,
 		WriteTimeout:   httpTimeout,
@@ -318,13 +363,13 @@ func main() {
 	if httpPort == "443" {
 		hostport = httpHost
 	}
-	logger.Infof("Streamlist (version: %s) %s", version, &url.URL{
+	logger.Infof("Soundscape version: %s %s", version, &url.URL{
 		Scheme: "https",
 		Host:   hostport,
 		Path:   httpPrefix + "/",
 	})
 	logger.Infof("Login credentials:  %s  /  %s", httpUsername, authsecret.Get())
-	logger.Fatal(secure.Serve(tlsListener))
+	logger.Fatal(httpsd.Serve(tlsListener))
 }
 
 type tcpKeepAliveListener struct {

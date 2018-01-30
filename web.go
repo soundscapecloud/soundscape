@@ -14,20 +14,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-/*
-	"hasmedia": func(lid, mid string) bool {
-		list, err := FindList(lid)
-		if err != nil {
-			return false
-		}
-		media, err := FindMedia(mid)
-		if err != nil {
-			return false
-		}
-		return list.HasMedia(media)
-	},
-*/
-
 var (
 	funcMap = template.FuncMap{
 		"sub": func(a, b int64) int64 {
@@ -72,7 +58,7 @@ var (
                 <title>Error</title>
             </head>
             <body>
-                <h2 style="color: orangered;">An error has occurred. <a href="/streamlist/logs">Check the logs</a></h2>
+                <h2 style="color: orangered;">An error has occurred. <a href="/soundscape/logs">Check the logs</a></h2>
             </body>
         </html>
     `
@@ -169,12 +155,14 @@ func Auth(h httprouter.Handle, optional bool) httprouter.Handle {
 }
 
 func XML(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	w.Header().Set("Content-Type", "text/xml")
+	fmt.Fprintf(w, xml.Header)
 	enc := xml.NewEncoder(w)
 	enc.Indent("", "    ")
 	if err := enc.Encode(data); err != nil {
 		logger.Error(err)
 	}
+	fmt.Fprintf(w, "\n")
 }
 
 func JSON(w http.ResponseWriter, data interface{}) {

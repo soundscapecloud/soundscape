@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
-	"github.com/streamlist/streamlist/internal/archiver"
-	"github.com/streamlist/streamlist/internal/youtube"
+	"github.com/soundscapecloud/soundscape/internal/archiver"
+	"github.com/soundscapecloud/soundscape/internal/youtube"
 
 	"github.com/disintegration/imaging"
 	"github.com/eduncan911/podcast"
@@ -84,14 +85,27 @@ func index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func home(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// Accept TOS
+	if r.FormValue("tos") == "yes" {
+		if err := config.SetAcceptTOS(true); err != nil {
+			Error(w, err)
+			return
+		}
+	}
+	// Require TOS
+	if !config.Get().AcceptTOS {
+		Redirect(w, r, "/help")
+		return
+	}
+
 	lists, err := ListLists()
 	if err != nil {
 		Error(w, err)
 		return
 	}
 	res := NewResponse(r, ps)
-	res.Section = "home"
 	res.Lists = lists
+	res.Section = "home"
 	HTML(w, "home.html", res)
 }
 
@@ -116,7 +130,9 @@ func configHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 
 func importHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var youtubes []youtube.Video
-	if query := strings.TrimSpace(r.FormValue("q")); query != "" {
+	query := strings.TrimSpace(r.FormValue("q"))
+
+	if query != "" {
 		yt, err := youtube.Search(query)
 		if err != nil {
 			logger.Errorf("query %q failed: %s", query, err)
@@ -138,9 +154,16 @@ func importHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	youtubes = filtered
 
 	res := NewResponse(r, ps)
-	res.Section = "import"
+	res.Query = query
 	res.Youtubes = youtubes
+	res.Section = "import"
 	HTML(w, "import.html", res)
+}
+
+func help(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	res := NewResponse(r, ps)
+	res.Section = "help"
+	HTML(w, "help.html", res)
 }
 
 func library(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -209,7 +232,6 @@ func library(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	res := NewResponse(r, ps)
-	res.Section = "library"
 	res.Medias = medias[begin:end]
 	res.Lists = lists
 	res.Page = page
@@ -218,6 +240,7 @@ func library(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	res.Limit = limit
 	res.Total = total
 	res.GrandTotal = grandTotal
+	res.Section = "library"
 	HTML(w, "library.html", res)
 }
 
@@ -258,7 +281,6 @@ func viewMedia(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	res := NewResponse(r, ps)
 	res.Media = media
-	res.Section = "library"
 	res.Section = "view"
 	HTML(w, "view.html", res)
 }
@@ -272,8 +294,15 @@ func deleteMedia(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func downloadMedia(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	filename := filepath.Join(datadir, ps.ByName("filename"))
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filepath.Base(filename)))
+	media, err := FindMedia(ps.ByName("media"))
+	if err != nil {
+		Error(w, err)
+		return
+	}
+	filename := filepath.Join(datadir, media.ID+".m4a")
+	nicename := strings.Trim(media.Title, `"`) + ".m4a"
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", nicename))
 	http.ServeFile(w, r, filename)
 }
 
@@ -350,12 +379,15 @@ func podcastList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	proto := r.Header.Get("X-Forwarded-Proto")
 	if proto == "" {
+		proto = r.Method
+	}
+	if proto != "http" {
 		proto = "https"
 	}
 	baseurl := fmt.Sprintf("%s://%s%s", proto, httpHost, httpPrefix)
 
 	p := podcast.New(list.Title, baseurl, list.Title, &list.Created, &list.Modified)
-	p.AddAuthor(httpHost, "streamlist@"+httpHost)
+	p.AddAuthor(httpHost, "soundscape@"+httpHost)
 	p.AddImage(baseurl + "/logo.png")
 
 	for _, media := range list.Medias {
@@ -369,14 +401,18 @@ func podcastList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			continue
 		}
 
-		streamurl := fmt.Sprintf("%s/stream/%s/%s.%s", baseurl, list.ID, media.ID, ext)
+		streamurl, err := url.Parse(fmt.Sprintf("%s/stream/%s/%s.%s", baseurl, list.ID, media.ID, ext))
+		if err != nil {
+			Error(w, err)
+			return
+		}
 
 		item := podcast.Item{
 			Title:       fmt.Sprintf("%s - %s", media.Title, media.Author),
 			Description: fmt.Sprintf("%s\n\n%s", media.Description, media.Created),
 			PubDate:     &media.Created,
 		}
-		item.AddEnclosure(streamurl, typ, fileInfo.Size())
+		item.AddEnclosure(streamurl.String(), typ, fileInfo.Size())
 		if _, err := p.AddItem(item); err != nil {
 			Error(w, err)
 			return
@@ -417,8 +453,8 @@ func playList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	res := NewResponse(r, ps)
-	res.Section = "play"
 	res.List = list
+	res.Section = "play"
 	HTML(w, "play.html", res)
 }
 
@@ -502,8 +538,8 @@ func editList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	res := NewResponse(r, ps)
-	res.Section = "edit"
 	res.List = list
+	res.Section = "edit"
 	HTML(w, "edit.html", res)
 }
 

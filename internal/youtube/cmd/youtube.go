@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 	"fmt"
-	"github.com/streamlist/streamlist/internal/youtube"
+	"github.com/soundscapecloud/soundscape/internal/youtube"
 )
 
 func main() {

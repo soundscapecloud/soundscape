@@ -1,12 +1,48 @@
+.screencast {
+    max-width: 100%;
+    box-shadow: 1px 1px 6px rgba(0, 0, 0, 0.3);
+}
+
+.breakup {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.breakup.youtube.header {
+    min-height: 3em;
+}
+
+iframe {
+    border: none;
+    max-width: 100%;
+    min-height: 240px;
+}
+
 video, audio {
     width: 100%;
 }
 
 .navmenu {
     border-radius: 0 !important;
+    background-color: #53a93f !important;
+}
+
+.green.icon {
+    color: #53a93f !important;
+}
+
+.ui.green.button, .ui.primary.button {
+    background-color: #53a93f !important;
 }
 
 .navmenu img {
+    max-width: 2em;
+}
+
+.ui.card > .image {
+    min-height: 268px;
+    background-color: #000;
 }
 
 video {
@@ -41,7 +77,7 @@ video {
 }
 
 #playerbox {
-    max-height: 360px;
+    max-height: 300px;
     overflow-y: scroll;
 }
 

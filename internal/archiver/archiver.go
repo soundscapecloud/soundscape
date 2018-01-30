@@ -17,7 +17,7 @@ import (
 	"github.com/rylio/ytdl"
 
 	"go.uber.org/zap"
-	// "github.com/streamlist/streamlist/internal/youtube"
+	// "github.com/soundscapecloud/soundscape/internal/youtube"
 )
 
 var (
@@ -325,13 +325,13 @@ func ffprobe(ctx context.Context, filename string) (*ffprobeInfo, error) {
 	return &ffinfo, nil
 }
 
-func (a *Archiver) transcode(ctx context.Context, videoFile, audioFile string) error {
+func (a *Archiver) transcode(ctx context.Context, videofile, audioFile string) error {
 	ffmpeg, err := exec.LookPath("ffmpeg")
 	if err != nil {
 		return err
 	}
 
-	ffinfo, err := ffprobe(ctx, videoFile)
+	ffinfo, err := ffprobe(ctx, videofile)
 	if err != nil {
 		return err
 	}
@@ -351,11 +351,11 @@ func (a *Archiver) transcode(ctx context.Context, videoFile, audioFile string) e
 			}
 		}
 
-		tmpname := videoFile + ".transcoding"
+		tmpname := videofile + ".transcoding"
 		defer os.Remove(tmpname)
 
 		args := []string{
-			"-y", "-i", videoFile,
+			"-y", "-i", videofile,
 			"-vn",
 			"-c:a", audioCodec,
 			"-strict", "experimental",
@@ -367,7 +367,7 @@ func (a *Archiver) transcode(ctx context.Context, videoFile, audioFile string) e
 
 		output, err := exec.CommandContext(ctx, ffmpeg, args...).CombinedOutput()
 		if err != nil {
-			return fmt.Errorf("transcoding %q to %q failed: %s\n%s", videoFile, tmpname, err, string(output))
+			return fmt.Errorf("transcoding %q to %q failed: %s\n%s", videofile, tmpname, err, string(output))
 		}
 		return os.Rename(tmpname, audioFile)
 	}()

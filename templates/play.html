@@ -32,7 +32,7 @@
 
                         <tr class="player-item" id="player-item-{{$n}}" data-index="{{$n}}">
                             <td class="eleven wide">
-                                <div class="truncate">{{$media.Title}}</div>
+                                <div class="breakup">{{$media.Title}}</div>
                             </td>
                             <td class="three wide right aligned">
                                 {{duration $media.Length}}
@@ -44,20 +44,20 @@
         </div>
         {{if $.User}}
             <div class="ui three large black icon buttons">
-                <a class="ui icon button" href="/streamlist/shuffle/{{$.List.ID}}"><i class="random icon"></i></a>
+                <a class="ui icon button" href="/soundscape/shuffle/{{$.List.ID}}"><i class="random icon"></i></a>
                 <button class="ui button"></button>
-                <a class="ui icon button" rel="alternate" type="application/rss+xml" href="/streamlist/podcast/{{$.List.ID}}"><i class="podcast icon"></i></a>
+                <a class="ui icon button" rel="alternate" type="application/rss+xml" href="/soundscape/podcast/{{$.List.ID}}"><i class="podcast icon"></i></a>
             </div>
         {{end}}
     </div>
 
 
     <!--h5 class="ui center aligned header">
-        <i class="help inverted icon" data-tooltip="Private podcast URL (e.g. Podcast -> Add Podcast URL)"></i><a rel="alternate" type="application/rss+xml" href="/streamlist/podcast/{{$.List.ID}}">https://{{$.HTTPHost}}<span></span>/streamlist/podcast/{{$.List.ID}}</a>
+        <i class="help inverted icon" data-tooltip="Private podcast URL (e.g. Podcast -> Add Podcast URL)"></i><a rel="alternate" type="application/rss+xml" href="/soundscape/podcast/{{$.List.ID}}">https://{{$.HTTPHost}}<span></span>/soundscape/podcast/{{$.List.ID}}</a>
     </h5-->
 
     <!--h5 class="ui center aligned header">
-        <a rel="alternate" type="application/mpegurl" href="/streamlist/m3u/{{$.List.ID}}">https://{{$.HTTPHost}}<span></span>/streamlist/m3u/{{$.List.ID}}</a>
+        <a rel="alternate" type="application/mpegurl" href="/soundscape/m3u/{{$.List.ID}}">https://{{$.HTTPHost}}<span></span>/soundscape/m3u/{{$.List.ID}}</a>
         <span data-tooltip="Private playlist URL (e.g. VLC -> Open Network Stream)">
             <i class="bordered help inverted icon"></i>
         </span>
@@ -72,7 +72,7 @@
         // create playlist
         var playlist = [];
         {{range $media := $.List.Medias}}
-            playlist.push('/streamlist/stream/{{$.List.ID}}/{{$media.ID}}.m4a');
+            playlist.push('/soundscape/stream/{{$.List.ID}}/{{$media.ID}}.m4a');
         {{end}}
 
         // $playerbox
@@ -175,7 +175,7 @@
                 }
                 sendingVolume = true;
                 var volume = $player.prop('volume').toFixed(2)/1;
-                $.post('/streamlist/config', { "key": "volume", "value": volume }).always(function() {
+                $.post('/soundscape/config', { "key": "volume", "value": volume }).always(function() {
                     setTimeout(function() {
                         sendingVolume = false;
                     }, 1000);

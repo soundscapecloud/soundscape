@@ -16,14 +16,14 @@
 <div class="ui container">
     <h3 class="ui header">YouTube</h3>
 
-    <form class="ui large form" action="/streamlist/import" method="GET">
-        <div class="sixteen wide field">
-            <input type="text" name="q" placeholder="Search" value="" autofocus="autofocus" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <form class="ui large form" action="/soundscape/import" method="GET">
+        <div class="field">
+            <div class="ui action input">
+                <input type="text" name="q" value="{{$.Query}}" placeholder="Search" {{if not $.Youtubes}}autofocus="autofocus"{{end}} autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+
+                <button type="submit" class="ui primary button">Search</button>
+            </div>
         </div>
-        <!--div class="sixteen wide field">
-            <div class="ui hidden divider"></div>
-            <button type="submit" class="ui right floated blue button">Search</button>
-        </div-->
     </form>
 
     {{if $query}}
@@ -33,34 +33,25 @@
         </h5>
 
         {{if $.Youtubes}}
-            <table class="ui compact fixed striped unstackable table">
-                <tbody>
+            <div class="ui stackable three column grid">
                 {{range $youtube := $.Youtubes}}
-                    <tr>
-                        <td class="nomobile two wide">
-                            <img class="thumbnail" src="{{$youtube.Thumbnail}}">
-                        </td>
-                        <td class="ten wide">
-                            <div class="truncate ui small header">
-                                {{$youtube.Title}}
+                    <div class="column">
+                        <div class="ui fluid card">
+                            <!--div class="content"><div class="breakup youtube header">{{$youtube.Title}} ({{duration $youtube.Length}})</div></div-->
+                            <iframe frameborder="0" width="100%" height="100%" src="https://youtube.com/embed/{{$youtube.ID}}"></iframe>
+                            <div class="extra content">
+                                <button style="display: none;" class="toggler ui fluid green button" disabled><i class="plus icon"></i>Save to Library</button>
+                                <button class="toggler ui fluid green button" data-url="/soundscape/archiver/save/{{$youtube.ID}}"><i class="plus icon"></i>Save to Library</button>
                             </div>
-                        </td>
-                        <td class="right aligned four wide">
-                            {{duration $youtube.Length}}
-                        </td>
-                        <td class="right aligned two wide">
-                            <button style="display: none;" class="toggler ui icon mini button" disabled><i class="cloud download icon"></i></button>
-                            <button class="toggler ui icon mini button" data-url="/streamlist/archiver/save/{{$youtube.ID}}"><i class="cloud download icon"></i></button>
-                        </td>
-                    </tr>
+                        </div>
+                    </div>
                 {{end}}
-                </tbody>
-            </table>
+            </div>
         {{else}}
             <div class="ui negative icon message">
-                <i class="warning sign icon"></i>
+                <i class="sign icon"></i>
                 <div class="content">
-                    <div class="header">No search results! <a href="/streamlist/import?q={{$query}}">Search again</a> or <a href="/streamlist/logs">check the logs</a>.</div>
+                    <div class="header">No results found.</div>
                 </div>
             </div>
         {{end}}
@@ -69,7 +60,7 @@
 
 <script>
     $(document).ready(function() {
-        poller('#jobs', '/streamlist/archiver/jobs', 2000);
+        poller('#jobs', '/soundscape/archiver/jobs', 2000);
     });
 </script>
 

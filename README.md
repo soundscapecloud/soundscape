@@ -8,7 +8,7 @@
 ## Features
 
 * **Import from YouTube**
- * Save any YouTube video as an MP3 in your library
+ * Save any YouTube video as a song in your library
 * **Keep your entire music collection in the cloud**
  * Store thousands of songs on your private server
 * **Listen to your music anywhere**
@@ -20,7 +20,7 @@
 
 ## Help / Reporting Bugs
 
-Email [mailto:soundscape@portal.cloud](soundscape@portal.cloud)
+Email soundscape@portal.cloud
 
 ## Run Soundscape on Portal
 

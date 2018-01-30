@@ -1,10 +1,10 @@
 # Soundscape - a personal music streaming server
 
-![Screencast](https://raw.githubusercontent.com/soundscape/soundscape/master/screencast1.gif)
+![Screencast](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screencast1.gif)
 
-![Screenshot - Playlists](https://raw.githubusercontent.com/soundscape/soundscape/master/screenshot1.png)
-![Screenshot - Library](https://raw.githubusercontent.com/soundscape/soundscape/master/screenshot2.png)
-![Screenshot - Import](https://raw.githubusercontent.com/soundscape/soundscape/master/screenshot3.png)
+![Screenshot - Playlists](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot1.png)
+![Screenshot - Library](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot2.png)
+![Screenshot - Import](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot3.png)
 
 ## Features
 
@@ -83,7 +83,7 @@ $ sudo apt-get update
 $ sudo apt-get install -y wget ffmpeg
 
 # Download the soundscape binary.
-$ sudo wget -O /usr/bin/soundscape https://github.com/watchercloud/watcher/raw/master/watcher-linux-amd64
+$ sudo wget -O /usr/bin/soundscape https://github.com/soundscapecloud/soundscape/raw/master/soundscape-linux-amd64
 
 # Make it executable.
 $ sudo chmod +x /usr/bin/soundscape
@@ -209,7 +209,7 @@ $ sudo docker run hello-world
 
 ### 2. Run the Docker image
 
-The official image is `soundscape/soundscape`, which should run in any up-to-date Docker environment.
+The official image is `soundscapecloud/soundscape`, which should run in any up-to-date Docker environment.
 
 ```bash
 
@@ -228,7 +228,7 @@ $ sudo docker create \
     --publish 80:80 \
     --publish 443:443 \
     --volume $HOME/Music:/data \
-    soundscape/soundscape:latest --http-host music.example.com --http-username $USER --letsencrypt
+    soundscapecloud/soundscape:latest --http-host music.example.com --http-username $USER --letsencrypt
 
 # Run the container
 $ sudo docker start soundscape
@@ -246,7 +246,7 @@ Pull the latest image, remove the container, and re-create the container as expl
 
 ```bash
 # Pull the latest image
-$ sudo docker pull soundscape/soundscape
+$ sudo docker pull soundscapecloud/soundscape
 
 # Stop the container
 $ sudo docker stop soundscape
@@ -293,7 +293,7 @@ The easiest way to build the static binary is using the `Dockerfile.build` file.
 
 ```bash
 # Clone the git repo
-$ git clone https://github.com/soundscape/soundscape.git
+$ git clone https://github.com/soundscapecloud/soundscape.git
 
 $ cd soundscape/
 

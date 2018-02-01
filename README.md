@@ -3,8 +3,8 @@
 ![Screencast](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screencast1.gif)
 
 ![Screenshot - Playlists](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot1.png?updatedv2)
-
 ![Screenshot - Library](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot2.png?updatedv2)
+![Screenshot - Import](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot3.png?updatedv2)
 
 ## Features
 

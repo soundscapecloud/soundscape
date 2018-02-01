@@ -9,15 +9,15 @@
 ## Features
 
 * **Import from YouTube**
- * Save any YouTube video as a song in your library
+  * Save any YouTube video as a song in your library
 * **Keep your entire music collection in the cloud**
- * Store thousands of songs on your private server
+  * Store thousands of songs on your private server
 * **Listen to your music anywhere**
- * Stream from any desktop or mobile device
+  * Stream from any desktop or mobile device
 * **Create custom playlists**
- * Add your music to multiple playlists
+  * Add your music to multiple playlists
 * **Share your playlists**
- * Let your friends listen to any playlist using the private URL
+  * Let your friends listen to any playlist using the private URL
 
 ## Help / Reporting Bugs
 

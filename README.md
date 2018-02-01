@@ -48,7 +48,7 @@ Running Soundscape on a VPS is designed to be as simple as possible.
 * Type: VPS or dedicated
 * Distribution: Ubuntu 16.04 (Xenial)
 * Memory: 512MB
-* Storage: 10GB+
+* Storage: 5GB+
 
 **Recommended Providers**
 

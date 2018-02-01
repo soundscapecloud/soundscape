@@ -1,0 +1,143 @@
+{{template "header.html" .}}
+
+<div class="ui container">
+
+    <div class="ui raised segment">
+        <h1 class="ui center aligned header">
+            Soundscape
+            <div class="sub header">
+                A personal music streaming server
+            </div>
+        </h1>
+
+        <div class="ui big list">
+            <div class="item">
+                <i class="large green check circle outline icon"></i>
+                <div class="content">
+                    <div class="header">
+                        Import from YouTube
+                    </div>
+                    <div class="description">
+                        Save any YouTube video as an MP3 in your library
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <i class="large green check circle outline icon"></i>
+                <div class="content">
+                    <div class="header">
+                        Keep your entire music collection in the cloud
+                    </div>
+                    <div class="description">
+                        Store thousands of songs on your private server
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <i class="large green check circle outline icon"></i>
+                <div class="content">
+                    <div class="header">
+                        Listen to your music anywhere
+                    </div>
+                    <div class="description">
+                        Stream from any desktop or mobile device
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <i class="large green check circle outline icon"></i>
+                <div class="content">
+                    <div class="header">
+                        Create custom playlists
+                    </div>
+                    <div class="description">
+                        Add your music to multiple playlists
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <i class="large green check circle outline icon"></i>
+                <div class="content">
+                    <div class="header">
+                        Share your playlists
+                    </div>
+                    <div class="description">
+                        Let your friends listen to any playlist using the private URL
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{if not $.Config.Get.AcceptTOS}}
+            <div class="ui hidden divider"></div>
+
+            <div class="ui one column grid">
+                <div class="center aligned one column row">
+                    <div class="column">
+                        <a href="/soundscape/?tos=yes" class="ui huge green button"><i class="checkmark icon"></i> Accept License &amp; Continue</a>
+                    </div>
+                </div>
+            </div>
+        {{end}}
+
+        <div class="ui hidden section divider"></div>
+
+        <div class="ui one column grid">
+            <div class="center aligned one column row">
+                <div class="column">
+                    <video id="screencast" class="screencast ui bordered rounded image" controls="controls" preload="auto" loop="loop" muted="muted" autoplay="autoplay">
+                        <source src="/soundscape/static/screencast1.mp4?updated=23458934289">
+                    </video>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="ui hidden section divider"></div>
+
+        <h2 class="ui center aligned header">License</h2>
+        <p>
+            MIT License
+        </p>
+
+        <p>
+            Copyright (c) 2017 Soundscape Cloud
+        </p>
+
+        <p>
+            Permission is hereby granted, free of charge, to any person obtaining a copy
+            of this software and associated documentation files (the "Software"), to deal
+            in the Software without restriction, including without limitation the rights
+            to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+            copies of the Software, and to permit persons to whom the Software is
+            furnished to do so, subject to the following conditions:
+        </p>
+
+        <p>
+            The above copyright notice and this permission notice shall be included in all
+            copies or substantial portions of the Software.
+        </p>
+
+        <p>
+            THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+            IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+            FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+            AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+            LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+            OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+            SOFTWARE.
+        </p>
+    </div>
+
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#play-video').click(function() {
+            $('#screencast')[0].play();
+        });
+    });
+</script>
+
+{{template "footer.html" .}}
+

@@ -1,0 +1,25 @@
+{{template "header.html" .}}
+
+<div class="ui container">
+
+    <h1 class="ui header">
+        Create a new playlist
+    </h1>
+
+    <form class="ui large form" action="/soundscape/create" method="POST">
+        <div class="fields">
+            <div class="sixteen wide field">
+                <input type="text" name="title" placeholder="e.g. my favorites" autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            </div>
+        </div>
+        <div class="fields">
+            <div class="sixteen wide field">
+                <br>
+                <button type="submit" class="ui right floated large green button">Create Playlist</button>
+            </div>
+        </div>
+    </form>
+
+</div>
+
+{{template "footer.html" .}}

@@ -1,0 +1,52 @@
+{{template "header.html" .}}
+
+<div class="ui container">
+    <div class="ui hidden clearing divider"></div>
+    <a class="ui right floated large green button" href="/soundscape/create"><i class="plus icon"></i>New Playlist</a>
+    <h2 class="ui header">Playlists</h2>
+
+    <div class="ui hidden divider"></div>
+
+    {{if $.Lists}}
+        <div class="ui stackable three column grid">
+            {{range $list := $.Lists}}
+                {{$mediacount := len $list.Medias}}
+                <div class="column">
+                    <div class="ui fluid raised card">
+                        <div class="content">
+                            <a class="header" href="/soundscape/play/{{$list.ID}}">{{$list.Title}}</a>
+                        </div>
+                        <a class="image" href="/soundscape/play/{{$list.ID}}">
+                            {{if $list.Medias}}
+                                {{$media := index $list.Medias 0}}
+                                <img src="/soundscape/media/thumbnail/{{$media.ID}}">
+                            {{else}}
+                                <img src="/soundscape/static/default.jpg">
+                            {{end}}
+                        </a>
+                        <div class="extra content">
+                            <div class="meta">
+                                <a class="right floated meta" href="/soundscape/edit/{{$list.ID}}"><i class="setting icon"></i> Edit</a>
+                            </div>
+                            <div class="category">
+                                {{if $mediacount}}
+                                    {{with $tl := $list.TotalLength}}{{duration $tl}}{{end}}
+                                    ({{$mediacount}} {{if gt $mediacount 1}}songs{{else}}song{{end}})
+                                {{end}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {{end}}
+        </div>
+    {{else}}
+        <div class="ui large message">
+            <div class="header">You have no playlists</div>
+            <p>
+                Need help? Visit the <a href="/soundscape/help">help page</a> for more info.
+            </p>
+        </div>
+    {{end}}
+</div>
+
+{{template "footer.html" .}}

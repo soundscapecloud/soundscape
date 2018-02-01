@@ -1,0 +1,258 @@
+{{template "header.html" .}}
+
+<style>
+    body {
+        background-color: rgba(0,0,0,.9);
+    }
+    .navmenu .item {
+        color: #f1f1f1 !important;
+    }
+</style>
+
+
+<div class="ui container">
+    <div class="ui inverted segment">
+        <h2 class="ui center aligned inverted sub header">
+            {{$.List.Title}}
+        </h2>
+
+        <div class="ui three massive black icon buttons">
+            <button class="player-prev ui button"><i class="left chevron icon"></i></button>
+            <button class="player-play ui button"><i class="play icon"></i></button>
+            <button class="player-pause ui button"><i class="pause icon"></i></button>
+            <button class="player-next ui button"><i class="right chevron icon"></i></button>
+        </div>
+
+        <audio id="player" data-index="" preload="" controls=""></audio>
+
+        <div id="playerbox">
+            <table class="ui single line fixed inverted unstackable table">
+                <tbody>
+                    {{range $n, $media := $.List.Medias}}
+
+                        <tr class="player-item" id="player-item-{{$n}}" data-index="{{$n}}">
+                            <td class="eleven wide">
+                                <div class="breakup">{{$media.Title}}</div>
+                            </td>
+                            <td class="three wide right aligned">
+                                {{duration $media.Length}}
+                            </td>
+                        </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{if $.User}}
+            <div class="ui three large black icon buttons">
+                <a class="ui icon button" href="/soundscape/shuffle/{{$.List.ID}}"><i class="random icon"></i></a>
+                <button class="ui button"></button>
+                <a class="ui icon button" rel="alternate" type="application/rss+xml" href="/soundscape/podcast/{{$.List.ID}}"><i class="podcast icon"></i></a>
+            </div>
+        {{end}}
+    </div>
+
+
+    <!--h5 class="ui center aligned header">
+        <i class="help inverted icon" data-tooltip="Private podcast URL (e.g. Podcast -> Add Podcast URL)"></i><a rel="alternate" type="application/rss+xml" href="/soundscape/podcast/{{$.List.ID}}">https://{{$.HTTPHost}}<span></span>/soundscape/podcast/{{$.List.ID}}</a>
+    </h5-->
+
+    <!--h5 class="ui center aligned header">
+        <a rel="alternate" type="application/mpegurl" href="/soundscape/m3u/{{$.List.ID}}">https://{{$.HTTPHost}}<span></span>/soundscape/m3u/{{$.List.ID}}</a>
+        <span data-tooltip="Private playlist URL (e.g. VLC -> Open Network Stream)">
+            <i class="bordered help inverted icon"></i>
+        </span>
+    </h5-->
+
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('.player-pause').hide();
+
+        // create playlist
+        var playlist = [];
+        {{range $media := $.List.Medias}}
+            playlist.push('/soundscape/stream/{{$.List.ID}}/{{$media.ID}}.m4a');
+        {{end}}
+
+        // $playerbox
+        var $playerbox = $('#playerbox');
+
+        // $player
+        var $player = $('#player');
+
+        // ctrl
+        var ctrl = {
+            'paused': function() {
+                return $player[0].paused;
+            },
+            'play': function() {
+                $player[0].play();
+                // $player.focus();
+            },
+            'pause': function() {
+                $player[0].pause()
+                // $player.focus();
+            },
+            'playprev': function() {
+                var n = parseInt($player.data('index'), 10);
+                n--;
+                ctrl.playitem(n, true);
+            },
+            'playnext': function() {
+                var n = parseInt($player.data('index'), 10);
+                n++;
+                ctrl.playitem(n, true);
+            },
+            'playitem': function(n, scroll) {
+                if (n > playlist.length-1) { n = 0; }
+                if (n < 0) { n = playlist.length-1; }
+
+                var $item = $('#player-item-'+n);
+                $('.player-item').removeClass('active');
+                $item.addClass('active');
+
+                if (scroll) {
+                    var target = $item.height() * n;
+                    $playerbox.animate({ scrollTop: target }, 200);
+                }
+
+                $player.attr('src', playlist[n]);
+                $player.data('index', n);
+                ctrl.play();
+            }
+        };
+
+        // pause
+        $('.player-pause').click(function (e) {
+            e.preventDefault()
+            ctrl.pause();
+        });
+
+        // play
+        $('.player-play').click(function (e) {
+            e.preventDefault()
+            ctrl.play();
+        });
+
+        // prev
+        $('.player-prev').click(function (e) {
+            e.preventDefault()
+            ctrl.playprev();
+        });
+
+        // next
+        $('.player-next').click(function (e) {
+            e.preventDefault()
+            ctrl.playnext();
+        });
+
+        // play individual item 
+        $('.player-item').click(function (e) {
+            e.preventDefault();
+            var n = parseInt($(this).data('index'), 10);
+            ctrl.playitem(n, false);
+        });
+
+        // on play
+        $player.on('play', function() {
+            $('.player-play').hide();
+            $('.player-pause').show();
+        });
+
+        // on pause
+        $player.on('pause', function() {
+            $('.player-pause').hide();
+            $('.player-play').show();
+        });
+
+        {{if $.User}}
+            // volume change
+            var sendingVolume = false;
+            $player.on('volumechange', function() {
+                if (sendingVolume) {
+                    return;
+                }
+                sendingVolume = true;
+                var volume = $player.prop('volume').toFixed(2)/1;
+                $.post('/soundscape/config', { "key": "volume", "value": volume }).always(function() {
+                    setTimeout(function() {
+                        sendingVolume = false;
+                    }, 1000);
+                });
+            });
+        {{end}}
+
+        // play the next item.
+        $player.on('ended', function() {
+            var n = parseInt($(this).data('index'), 10);
+            n++;
+            ctrl.playitem(n, true);
+        });
+
+        // keyboard shortcuts
+        var KEY_SPACE = 32;
+        var KEY_PLUS = 43;
+        var KEY_MINUS = 45;
+        var KEY_M = 109;
+        var KEY_N = 110;
+        var KEY_P = 112;
+
+        $(document).keypress(function(e) {
+            switch (e.which) {
+                // toggle play/pause
+                case KEY_SPACE:
+                    if (ctrl.paused()) {
+                        ctrl.play();
+                    } else {
+                        ctrl.pause();
+                    }
+                    return false;
+                // volume mute
+                case KEY_M:
+                    var muted = $player.prop('muted');
+                    $player.prop('muted', !muted);
+                    return false;
+                // volume up
+                case KEY_MINUS:
+                    volume -= 0.1;
+                    if (volume < 0 || isNaN(volume)) {
+                        volume = 0;
+                    }
+                    $player.prop('volume', volume);
+                    return false;
+                // volume down
+                case KEY_PLUS:
+                    var volume = $player.prop('volume');
+                    volume += 0.1;
+                    if (volume > 1 || isNaN(volume)) {
+                        volume = 1;
+                    }
+                    $player.prop('volume', volume);
+                    return false;
+                // play previous
+                case KEY_P:
+                    ctrl.playprev();
+                    return false;
+                // play next
+                case KEY_N:
+                    ctrl.playnext();
+                    return false;
+            }
+        });
+
+
+        // set initial item to first one.
+        $player.attr('src', playlist[0]);
+        $player.data('index', 0);
+        $('.player-item').removeClass('active');
+        $('#player-item-0').addClass('active');
+        // $player.focus();
+
+        // set volume
+        $player.prop('volume', {{$.Config.Volume}});
+    });
+</script>
+
+
+{{template "footer.html" .}}

@@ -1,0 +1,68 @@
+{{template "header.html" .}}
+
+{{$query := $.Request.FormValue "q"}}
+
+<div class="ui container">
+    <h2 class="ui header">Import</h2>
+</div>
+
+<div class="ui hidden divider"></div>
+
+<div id="jobs" class="ui container">
+</div>
+
+<div class="ui hidden divider"></div>
+
+<div class="ui container">
+    <h3 class="ui header">YouTube</h3>
+
+    <form class="ui large form" action="/soundscape/import" method="GET">
+        <div class="field">
+            <div class="ui action input">
+                <input type="text" name="q" value="{{$.Query}}" placeholder="Search" {{if not $.Youtubes}}autofocus="autofocus"{{end}} autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+
+                <button type="submit" class="ui primary button">Search</button>
+            </div>
+        </div>
+    </form>
+
+    {{if $query}}
+        <div class="ui hidden divider"></div>
+        <h5 class="ui header">
+            Results for "{{$query}}"
+        </h5>
+
+        {{if $.Youtubes}}
+            <div class="ui stackable three column grid">
+                {{range $youtube := $.Youtubes}}
+                    <div class="column">
+                        <div class="ui fluid card">
+                            <!--div class="content"><div class="breakup youtube header">{{$youtube.Title}} ({{duration $youtube.Length}})</div></div-->
+                            <iframe frameborder="0" width="100%" height="100%" src="https://youtube.com/embed/{{$youtube.ID}}"></iframe>
+                            <div class="extra content">
+                                <button style="display: none;" class="toggler ui fluid green button" disabled><i class="plus icon"></i>Save to Library</button>
+                                <button class="toggler ui fluid green button" data-url="/soundscape/archiver/save/{{$youtube.ID}}"><i class="plus icon"></i>Save to Library</button>
+                            </div>
+                        </div>
+                    </div>
+                {{end}}
+            </div>
+        {{else}}
+            <div class="ui negative icon message">
+                <i class="sign icon"></i>
+                <div class="content">
+                    <div class="header">No results found.</div>
+                </div>
+            </div>
+        {{end}}
+    {{end}}
+</div>
+
+<script>
+    $(document).ready(function() {
+        poller('#jobs', '/soundscape/archiver/jobs', 2000);
+    });
+</script>
+
+
+{{template "footer.html" .}}

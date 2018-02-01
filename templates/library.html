@@ -1,0 +1,77 @@
+{{template "header.html" .}}
+
+<div class="ui container">
+    <h2 class="ui header">Library</h2>
+
+    <form class="ui small form" action="/soundscape/library" method="GET">
+        <div class="fields">
+            <div class="eight wide field">
+                <input type="text" name="q" value="{{$.Query}}" placeholder="Filter" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            </div>
+        </div>
+    </form>
+
+    {{if $.Query}}
+        <div class="ui hidden divider"></div>
+        <a href="/soundscape/library" class="ui image label">{{$.Query}} <i class="delete icon"></i></a>
+    {{end}}
+
+    {{if $.Medias}}
+        <table class="ui fixed striped unstackable table">
+            <tbody>
+                {{range $media := $.Medias}}
+                    <tr>
+                        <td class="nomobile two wide">
+                            <a href="/soundscape/media/view/{{$media.ID}}">
+                                <img class="thumbnail" src="/soundscape/media/thumbnail/{{$media.ID}}">
+                            </a>
+                        </td>
+                        <td class="ten wide">
+                            <a href="/soundscape/media/view/{{$media.ID}}">
+                                <div class="breakup ui small header">
+                                    {{$media.Title}}
+                                </div>
+                            </a>
+                            {{range $list := $.Lists}}
+                                <div class="listbox">
+                                    {{$hasmedia := $list.HasMedia $media}}
+                                    <button {{if $hasmedia}}style="display: none;"{{end}} class="toggler ui mini basic button" data-url="/soundscape/add/{{$list.ID}}/{{$media.ID}}"><i class="square outline icon"></i> {{$list.Title}}</button>
+                                    <button {{if not $hasmedia}}style="display: none;"{{end}} class="toggler ui mini green button" data-url="/soundscape/remove/{{$list.ID}}/{{$media.ID}}"><i class="checkmark box icon"></i> {{$list.Title}}</button>
+                                </div>
+                            {{end}}
+                        </td>
+                        <td class="right aligned four wide">
+                            {{duration $media.Length}}
+                            &nbsp;&nbsp;
+                            <a href="/soundscape/media/delete/{{$media.ID}}?p={{$.Page}}&q={{$.Query}}" data-prompt="Delete {{$media.Title}}?" class="confirm"><i class="red trash icon"></i></a>
+                        </td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+
+        <div class="ui fluid pagination menu">
+            {{range $page := $.Pages}}
+                <a href="/soundscape/library?p={{$page}}{{if $.Query}}&q={{$.Query}}{{end}}" class="{{if eq $page $.Page}}active{{end}} item">{{$page}}</a>
+            {{end}}
+        </div>
+
+    {{else}}
+        {{if $.Query}}
+            <div class="ui hidden divider"></div>
+            <div class="ui info message">
+                <div class="header">
+                    No media found matching &quot;{{$.Query}}&quot;
+                </div>
+            </div>
+            <div class="ui hidden divider"></div>
+        {{end}}
+    {{end}}
+
+
+    <h5 class="ui header">
+        {{$.DiskInfo.UsedGB}} GB ({{$.DiskInfo.UsedPercent | printf "%.0f"}}%) of {{$.DiskInfo.TotalGB}} GB
+    </h5>
+</div>
+
+{{template "footer.html" .}}

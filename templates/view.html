@@ -1,0 +1,23 @@
+{{template "header.html" .}}
+
+<style>
+    body {
+        background-color: rgba(0,0,0,.9);
+    }
+    .navmenu .item {
+        color: #f1f1f1 !important;
+    }
+</style>
+
+<div class="ui container">
+    <h4 class="ui inverted header">{{$.Media.Title}}</h4>
+    <audio controls><source src="/soundscape/media/access/{{$.Media.ID}}.m4a"></audio>
+
+    <div class="ui hidden clearing divider"></div>
+
+    {{if $.Media.HasAudio}}
+        <a href="/soundscape/media/download/{{$.Media.ID}}" class="ui large black button"><i class="download icon"></i>Download Audio (M4A)</a>
+    {{end}}
+</div>
+
+{{template "footer.html" .}}

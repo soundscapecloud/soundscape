@@ -1,0 +1,34 @@
+<h5 class="ui header">
+    {{$.DiskInfo.UsedGB}} GB ({{$.DiskInfo.UsedPercent | printf "%.0f"}}%) of {{$.DiskInfo.TotalGB}} GB
+</h5>
+
+<div class="ui hidden divider"></div>
+
+{{if or $.ActiveMedias $.QueuedMedias}}
+    <div class="ui hidden divider"></div>
+    <h5 class="ui header">
+        {{len $.ActiveMedias}} active &nbsp; {{len $.QueuedMedias}} queued
+    </h5>
+{{end}}
+
+{{if $.ActiveMedias}}
+<table class="ui single line fixed large table">
+    <tbody>
+        {{range $media := $.ActiveMedias}}
+            <tr>
+                <td class="twelve wide">
+                    <i class="orange asterisk loading icon"></i>{{$media.Title}}
+                </td>
+                <td class="four wide">
+                    <a href="/soundscape/archiver/cancel/{{$media.ID}}" data-prompt="Cancel {{$media.Title}}?" class="confirm ui right floated mini red basic button">Cancel</a>
+                </td>
+            </tr>
+        {{end}}
+    </tbody>
+</table>
+
+
+<div class="ui hidden section divider"></div>
+
+{{end}}
+

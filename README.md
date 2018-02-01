@@ -2,9 +2,9 @@
 
 ![Screencast](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screencast1.gif)
 
-![Screenshot - Playlists](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot1.png)
+![Screenshot - Playlists](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot1.png?updatedv2)
 
-![Screenshot - Library](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot2.png)
+![Screenshot - Library](https://raw.githubusercontent.com/soundscapecloud/soundscape/master/screenshot2.png?updatedv2)
 
 ## Features
 

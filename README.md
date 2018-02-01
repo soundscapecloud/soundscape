@@ -72,8 +72,6 @@ When enabled with the `--letsencrypt` flag, soundscape runs a TLS ("SSL") https 
 
 ### 4. Run the static binary
 
-**Latest stable release: [v0.0.1](https://github.com/soundscapecloud/soundscape/releases/tag/v0.0.1)**
-
 Replace `amd64` with `arm64` or `armv7` depending on your architecture.
 
 ```bash
